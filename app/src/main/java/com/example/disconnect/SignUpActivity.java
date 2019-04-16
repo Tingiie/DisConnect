@@ -27,16 +27,16 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_up);
 
-        editTextEmail = (EditText) findViewById(R.id.editTextEmail);
+        editTextEmail = (EditText) findViewById(R.id.input_email);
 
-        editTextPassword = (EditText) findViewById(R.id.editTextPassword);
+        editTextPassword = (EditText) findViewById(R.id.input_password);
 
-        progressBar = (ProgressBar) findViewById(R.id.progressbar);
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
         FirebaseApp.initializeApp(this);
         mAuth = FirebaseAuth.getInstance();
 
-        findViewById(R.id.textViewLogin).setOnClickListener(this);
-        findViewById(R.id.buttonSignUp).setOnClickListener(this);
+        findViewById(R.id.btn_register).setOnClickListener(this);
+
 
 
     }
@@ -94,11 +94,11 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
     @Override
     public void onClick(View v) {
         switch(v.getId()){
-            case R.id.buttonSignUp:
+            case R.id.btn_register:
             registerUser();
                 break;
 
-            case R.id.textViewLogin:
+            case R.id.link_register:
 
                 startActivity(new Intent(this, LogInActivity.class));
         }

@@ -30,13 +30,13 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
 
         mAuth = FirebaseAuth.getInstance();
 
-        editTextEmail = (EditText) findViewById(R.id.editTextEmail);
-        editTextPassword = (EditText) findViewById(R.id.editTextPassword);
+        editTextEmail = (EditText) findViewById(R.id.email);
+        editTextPassword = (EditText) findViewById(R.id.password);
 
-        progressBar = (ProgressBar) findViewById(R.id.progressbar);
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
-        findViewById(R.id.textViewSignup).setOnClickListener(this);
-        findViewById(R.id.buttonLogin).setOnClickListener(this);
+        findViewById(R.id.email_sign_in_button).setOnClickListener(this);
+        findViewById(R.id.link_register).setOnClickListener(this);
 
     }
 
@@ -92,13 +92,13 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
     @Override
     public void onClick(View v) {
      switch (v.getId()){
-         case R.id.textViewSignup:
+         case R.id.link_register:
 
          startActivity(new Intent(this, SignUpActivity.class));
 
          break;
 
-         case R.id.buttonLogin:
+         case R.id.email_sign_in_button:
 
              userLogin();
 
