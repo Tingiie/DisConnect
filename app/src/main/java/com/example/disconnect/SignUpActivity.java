@@ -35,8 +35,9 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
         FirebaseApp.initializeApp(this);
         mAuth = FirebaseAuth.getInstance();
 
-
+        findViewById(R.id.textViewLogin).setOnClickListener(this);
         findViewById(R.id.buttonSignUp).setOnClickListener(this);
+
 
     }
 
@@ -75,9 +76,13 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
         mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
+
                 progressBar.setVisibility(View.GONE);
                 if(task.isSuccessful()) {
                     Toast.makeText(getApplicationContext(), "User Registered Successful", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(SignUpActivity.this, NavMapActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivity(intent);
                 } else {
                     Toast.makeText(getApplicationContext(), "Some error occurred", Toast.LENGTH_SHORT).show();
                 }
