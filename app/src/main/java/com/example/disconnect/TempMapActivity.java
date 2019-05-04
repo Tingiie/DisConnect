@@ -21,7 +21,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-
+import com.google.android.gms.tasks.Task;
 
 public class TempMapActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -29,25 +29,18 @@ public class TempMapActivity extends AppCompatActivity implements OnMapReadyCall
     private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
     private static final String COARSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
     private static final int LOCATION_REQ_CODE = 1234;
-    private static final float DEFAULT_ZOOM = 15;
+    private static final float DEFAULT_ZOOM = 15f;
 
     private boolean mLocationPermissionGranted = false;
     private GoogleMap mMap;
     private LocationManager locationManager;
 
-    @SuppressLint("MissingPermission")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_temp_map);
 
         getLocationPermission();
-        LocationListener locationListener = new MyLocationListener();
-        locationManager=(LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        locationManager.requestLocationUpdates( "gps",
-                2000,
-                0, locationListener);
-
     }
 
     @Override
@@ -59,15 +52,28 @@ public class TempMapActivity extends AppCompatActivity implements OnMapReadyCall
         if (mLocationPermissionGranted) {
             getDeviceLocation();
 
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this,
+                    Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+            mMap.setMyLocationEnabled(true);
+            //mMap.getUiSettings().setMyLocationButtonEnabled(false);  //ToDO: Check later
         }
     }
 
-    @SuppressLint("MissingPermission")
     private void getDeviceLocation() {
         Log.d(TAG, "getDeviceLocation: getting the device's current location");
 
+        LocationListener locationListener = new MyLocationListener();
+        locationManager=(LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
+
         try {
             if (mLocationPermissionGranted) {
+                locationManager.requestLocationUpdates( "gps",
+                        2000,
+                        0, locationListener);
                 Location currentLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                 LatLng currentLatLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
                 moveCamera(currentLatLng, DEFAULT_ZOOM);
