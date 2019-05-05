@@ -41,7 +41,7 @@
 
         <activity
             android:name=".TempMapActivity"
-            android:label="temp_map_activity"></activity>_
+            android:label="temp_map_activity"></activity>
         <activity
             android:name=".TempMainActivity"
             android:label="temp_main_activity"></activity>
