@@ -51,9 +51,8 @@ public class MainActivity extends AppCompatActivity {
 
     public void startMapActivity(View view) {
         //testActivity
-        Intent intent = new Intent(this, TempMainActivity.class);
+        Intent intent = new Intent(this, NavMapActivity.class);
 
-        //Intent intent = new Intent(this, NavMapActivity.class);
         startActivity(intent);
     }
 }
