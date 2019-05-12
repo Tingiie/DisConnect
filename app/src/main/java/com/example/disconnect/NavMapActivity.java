@@ -55,7 +55,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 if (hasPermissionAndLocation()) {
                     if (sharedLocation) {
                         enableMapLocation(true);
-                        resetMap();
+                        initMap();
                         sharedLocation = true;
                         Toast.makeText(NavMapActivity.this, "Your location is visible to other users", Toast.LENGTH_SHORT).show();
                     } else {
@@ -131,12 +131,12 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         mMap.getUiSettings().setCompassEnabled(true);
     }
 
-    private void resetMap() {
-        mMap.clear();
-        setMapSettings();
-        setCircle();
-        updateDeviceLocation();
-    }
+//    private void resetMap() {
+//        mMap.clear();
+//        setMapSettings();
+//        setCircle();
+//        updateDeviceLocation();
+//    }
 
     private void setCircle() {
         mMap.addCircle(new CircleOptions()
@@ -145,7 +145,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 .strokeColor(Color.argb(150,00,100, 210))
                 .fillColor(Color.argb(50,00,100, 210)));
     }
-
 
     private boolean hasPermissionAndLocation() {
             return (ActivityCompat.checkSelfPermission(this, FINE_LOCATION ) == PackageManager.PERMISSION_GRANTED && locationManager.isLocationEnabled());
@@ -160,8 +159,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             return false;
         }
     }
-
-
+    
 
 //    private void getLocationPermission() {
 //        Log.d(TAG, "getLocationPermission: getting location permissions");
