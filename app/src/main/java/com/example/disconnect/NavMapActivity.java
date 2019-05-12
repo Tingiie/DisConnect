@@ -20,11 +20,10 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 
-public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class NavMapActivity extends AppCompatActivity implements LocationListener, OnMapReadyCallback {
 
     private static final String TAG = "NavMapActivity";
     private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
@@ -34,87 +33,43 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
     private GoogleMap mMap;
     private LocationManager locationManager;
+    private LocationListener locationListener;
     private boolean sharedLocation;
-    LatLng currentLatLng;
+    private LatLng currentLatLng;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_nav_map);
+
+        locationListener = new MyLocationListener();
+        locationManager=(LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
         FloatingActionButton gpsButton = findViewById(R.id.gps_button);
         gpsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 sharedLocation = !sharedLocation;
-                String status;
+                String buttonState = "off";
                 if (sharedLocation) {
-                    if (ActivityCompat.checkSelfPermission(NavMapActivity.this, FINE_LOCATION ) == PackageManager.PERMISSION_GRANTED) {
-                        mMap.setMyLocationEnabled(true);
-                        status = "on";
-                    } else {
-                        Toast.makeText(NavMapActivity.this, "Please turn on Location", Toast.LENGTH_LONG).show();
-                        status = "off";
+                    if (hasPermissionAndLocation()) {
+                        initMap();
+                        //resetMap();
+                        //enableMapLocation(true);
+                        sharedLocation = true;
+                        buttonState = "on";
                     }
-
                 } else {
-                    status = "off";
-                    mMap.setMyLocationEnabled(false);
-
+                    Toast.makeText(NavMapActivity.this, "Please turn on Location", Toast.LENGTH_LONG).show();
+                    buttonState = "off";
+                    mMap.clear();
+                    enableMapLocation(false);
                 }
-                Toast.makeText(NavMapActivity.this, "Shared location is " + status, Toast.LENGTH_SHORT).show();
+                Toast.makeText(NavMapActivity.this, "Shared location is " + buttonState, Toast.LENGTH_SHORT).show();
             }
         });
 
         initMap();
-    }
-
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        Toast.makeText(this, "Map is ready", Toast.LENGTH_SHORT).show();
-        Log.d(TAG, "onMapReady: map is ready");
-        mMap = googleMap;
-        setMapSettings();
-
-        if (ActivityCompat.checkSelfPermission(this, FINE_LOCATION ) == PackageManager.PERMISSION_GRANTED) {
-            getDeviceLocation();
-            mMap.setMyLocationEnabled(true);
-            sharedLocation = true;
-        } else {
-            Toast.makeText(this, "Please turn on Location", Toast.LENGTH_LONG).show();
-        }
-    }
-
-    private void getDeviceLocation() {
-        Log.d(TAG, "getDeviceLocation: getting the device's current location");
-
-        LocationListener locationListener = new MyLocationListener();
-        locationManager=(LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-
-        try {
-            if (ActivityCompat.checkSelfPermission(this, FINE_LOCATION ) == PackageManager.PERMISSION_GRANTED) {
-                locationManager.requestLocationUpdates("gps",
-                        2000,
-                        0, locationListener);
-                Location currentLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                currentLatLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
-                moveCamera(currentLatLng, DEFAULT_ZOOM);
-                mMap.addCircle(new CircleOptions()
-                        .center(currentLatLng)
-                        .radius(300)
-                        .strokeColor(Color.argb(150,00,100, 210))
-                        .fillColor(Color.argb(50,00,100, 210)));
-            } else {
-                Log.d(TAG, "getDeviceLocation: current location is null");
-                Toast.makeText(NavMapActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
-            }
-        } catch (Exception e) {
-        Log.d(TAG, "getDeviceLocation: Exception: " + e.getMessage());
-        }
-    }
-
-    private void moveCamera(LatLng latlng, float zoom){
-        Log.d(TAG, "moveCamera: moving the camera to Latitude: " + latlng.latitude + ", longitude: " + latlng.longitude);
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latlng, zoom));
     }
 
     private void initMap() {
@@ -123,11 +78,110 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         mapFragment.getMapAsync(NavMapActivity.this);
     }
 
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        //Toast.makeText(this, "Map is ready", Toast.LENGTH_SHORT).show();
+        Log.d(TAG, "onMapReady: map is ready");
+        mMap = googleMap;
+
+        if (hasPermissionAndLocation()) {
+            setMapSettings();
+            updateDeviceLocation();
+            enableMapLocation(true);
+            sharedLocation = true;
+            setCircle();
+        } else {
+            Toast.makeText(this, "Please turn on Location", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void updateDeviceLocation() {
+        Log.d(TAG, "updateDeviceLocation: getting the device's current location");
+
+        try {
+            if (hasPermissionAndLocation()) {
+                locationManager.requestLocationUpdates("gps",
+                        2000,
+                        0, locationListener);
+                Location currentLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                currentLatLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+                moveCamera(currentLatLng, DEFAULT_ZOOM);
+            } else {
+                Log.d(TAG, "updateDeviceLocation: current location is null");
+                Toast.makeText(NavMapActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
+            }
+        } catch (SecurityException e) {
+        Log.d(TAG, "updateDeviceLocation: SecurityException: " + e.getMessage());
+        Toast.makeText(NavMapActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
+
+        }
+    }
+
+    private void moveCamera(LatLng latlng, float zoom){
+        Log.d(TAG, "moveCamera: moving the camera to Latitude: " + latlng.latitude + ", longitude: " + latlng.longitude);
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latlng, zoom));
+    }
+
     private void setMapSettings() {
         mMap.getUiSettings().setAllGesturesEnabled(false);
         mMap.getUiSettings().setMyLocationButtonEnabled(false);
         mMap.getUiSettings().setCompassEnabled(true);
     }
+
+    private void resetMap() {
+        mMap.clear();
+        setMapSettings();
+        setCircle();
+        updateDeviceLocation();
+    }
+
+    private void setCircle() {
+        mMap.addCircle(new CircleOptions()
+                .center(currentLatLng)
+                .radius(300)
+                .strokeColor(Color.argb(150,00,100, 210))
+                .fillColor(Color.argb(50,00,100, 210)));
+    }
+
+
+    private boolean hasPermissionAndLocation() {
+            return (ActivityCompat.checkSelfPermission(this, FINE_LOCATION ) == PackageManager.PERMISSION_GRANTED && locationManager.isLocationEnabled());
+    }
+
+    private boolean enableMapLocation(boolean status) {
+        try {
+            mMap.setMyLocationEnabled(status);
+            return true;
+        } catch (SecurityException e) {
+            Log.d(TAG, "enableMapLocation: SecurityError: " + e.getMessage());
+            return false;
+        }
+    }
+
+
+// LocationListener methods
+
+
+    @Override
+    public void onLocationChanged(Location location) {
+//        updateDeviceLocation();
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+
+    }
+
 
 //    private void getLocationPermission() {
 //        Log.d(TAG, "getLocationPermission: getting location permissions");
