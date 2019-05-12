@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -23,7 +22,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 
-public class NavMapActivity extends AppCompatActivity implements LocationListener, OnMapReadyCallback {
+public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private static final String TAG = "NavMapActivity";
     private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
@@ -33,9 +32,10 @@ public class NavMapActivity extends AppCompatActivity implements LocationListene
 
     private GoogleMap mMap;
     private LocationManager locationManager;
-    private LocationListener locationListener;
-    private boolean sharedLocation;
+    private MyLocationListener locationListener;
+    private boolean sharedLocation = false;
     private LatLng currentLatLng;
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -46,26 +46,29 @@ public class NavMapActivity extends AppCompatActivity implements LocationListene
         locationManager=(LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
         FloatingActionButton gpsButton = findViewById(R.id.gps_button);
+
         gpsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 sharedLocation = !sharedLocation;
-                String buttonState = "off";
-                if (sharedLocation) {
-                    if (hasPermissionAndLocation()) {
-                        initMap();
-                        //resetMap();
-                        //enableMapLocation(true);
+
+                if (hasPermissionAndLocation()) {
+                    if (sharedLocation) {
+                        enableMapLocation(true);
+                        resetMap();
                         sharedLocation = true;
-                        buttonState = "on";
+                        Toast.makeText(NavMapActivity.this, "Your location is visible to other users", Toast.LENGTH_SHORT).show();
+                    } else {
+                        mMap.clear();
+                        enableMapLocation(false);
+                        sharedLocation = false;
+                        Toast.makeText(NavMapActivity.this, "Your location is hidden from other users", Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     Toast.makeText(NavMapActivity.this, "Please turn on Location", Toast.LENGTH_LONG).show();
-                    buttonState = "off";
                     mMap.clear();
                     enableMapLocation(false);
                 }
-                Toast.makeText(NavMapActivity.this, "Shared location is " + buttonState, Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -158,29 +161,6 @@ public class NavMapActivity extends AppCompatActivity implements LocationListene
         }
     }
 
-
-// LocationListener methods
-
-
-    @Override
-    public void onLocationChanged(Location location) {
-//        updateDeviceLocation();
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-
-    }
 
 
 //    private void getLocationPermission() {
