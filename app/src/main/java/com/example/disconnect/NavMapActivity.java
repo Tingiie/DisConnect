@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -35,6 +36,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private MyLocationListener locationListener;
     private boolean sharedLocation = false;
     private LatLng currentLatLng;
+    private boolean prevDisabled = false;
 
 
     @Override
@@ -55,7 +57,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 if (hasPermissionAndLocation()) {
                     if (sharedLocation) {
                         enableMapLocation(true);
-                        initMap();
+                        resetMap();
                         sharedLocation = true;
                         Toast.makeText(NavMapActivity.this, "Your location is visible to other users", Toast.LENGTH_SHORT).show();
                     } else {
@@ -64,11 +66,29 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                         sharedLocation = false;
                         Toast.makeText(NavMapActivity.this, "Your location is hidden from other users", Toast.LENGTH_SHORT).show();
                     }
+                    prevDisabled = false;
                 } else {
                     Toast.makeText(NavMapActivity.this, "Please turn on Location", Toast.LENGTH_LONG).show();
                     mMap.clear();
                     enableMapLocation(false);
                 }
+
+//                if (hasPermissionAndLocation()) {
+//                    if (sharedLocation) {
+//                        enableMapLocation(true);
+//                        Toast.makeText(NavMapActivity.this, "Shared location is " + sharedLocation, Toast.LENGTH_SHORT).show();
+//                        initMap();
+//                    } else {
+//                        Toast.makeText(NavMapActivity.this, "Shared location is " + sharedLocation, Toast.LENGTH_SHORT).show();
+//                        mMap.clear();
+//                        enableMapLocation(false);
+//                    }
+//                } else {
+//                    Toast.makeText(NavMapActivity.this, "Please turn on Location", Toast.LENGTH_LONG).show();
+//                    mMap.clear();
+//                    //enableMapLocation(false);
+//                }
+
             }
         });
 
@@ -131,12 +151,12 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         mMap.getUiSettings().setCompassEnabled(true);
     }
 
-//    private void resetMap() {
-//        mMap.clear();
-//        setMapSettings();
-//        setCircle();
-//        updateDeviceLocation();
-//    }
+    private void resetMap() {
+        mMap.clear();
+        setMapSettings();
+        setCircle();
+        updateDeviceLocation();
+    }
 
     private void setCircle() {
         mMap.addCircle(new CircleOptions()
@@ -145,6 +165,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 .strokeColor(Color.argb(150,00,100, 210))
                 .fillColor(Color.argb(50,00,100, 210)));
     }
+
 
     private boolean hasPermissionAndLocation() {
             return (ActivityCompat.checkSelfPermission(this, FINE_LOCATION ) == PackageManager.PERMISSION_GRANTED && locationManager.isLocationEnabled());
@@ -159,7 +180,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             return false;
         }
     }
-    
+
+
 
 //    private void getLocationPermission() {
 //        Log.d(TAG, "getLocationPermission: getting location permissions");
