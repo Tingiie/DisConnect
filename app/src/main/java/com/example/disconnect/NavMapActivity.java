@@ -3,6 +3,7 @@ package com.example.disconnect;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -19,6 +20,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 
 public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallback {
@@ -32,6 +35,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private GoogleMap mMap;
     private LocationManager locationManager;
     private boolean sharedLocation;
+    LatLng currentLatLng;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -44,11 +48,12 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 sharedLocation = !sharedLocation;
                 String status;
                 if (sharedLocation) {
-                    status = "on";
                     if (ActivityCompat.checkSelfPermission(NavMapActivity.this, FINE_LOCATION ) == PackageManager.PERMISSION_GRANTED) {
                         mMap.setMyLocationEnabled(true);
+                        status = "on";
                     } else {
                         Toast.makeText(NavMapActivity.this, "Please turn on Location", Toast.LENGTH_LONG).show();
+                        status = "off";
                     }
 
                 } else {
@@ -91,8 +96,13 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                         2000,
                         0, locationListener);
                 Location currentLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                LatLng currentLatLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+                currentLatLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
                 moveCamera(currentLatLng, DEFAULT_ZOOM);
+                mMap.addCircle(new CircleOptions()
+                        .center(currentLatLng)
+                        .radius(300)
+                        .strokeColor(Color.argb(150,00,100, 210))
+                        .fillColor(Color.argb(50,00,100, 210)));
             } else {
                 Log.d(TAG, "getDeviceLocation: current location is null");
                 Toast.makeText(NavMapActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
