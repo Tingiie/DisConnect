@@ -60,26 +60,26 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                     initMap();
                 }
 
+                sharedLocation = !sharedLocation;
 
                 if (hasPermissionAndLocation()) {
-                    sharedLocation = !sharedLocation;
 
                     if (sharedLocation) {
-                        enableMapLocation(true);
-                        resetMap();
-                        sharedLocation = true;
                         Toast.makeText(NavMapActivity.this, "Your location is visible to other users", Toast.LENGTH_SHORT).show();
+                        resetMap();
+                        enableMapLocation(true);
+                        sharedLocation = true;
                     } else {
+                        Toast.makeText(NavMapActivity.this, "Your location is hidden from other users", Toast.LENGTH_SHORT).show();
+
                         mMap.clear();
                         enableMapLocation(false);
                         sharedLocation = false;
-                        Toast.makeText(NavMapActivity.this, "Your location is hidden from other users", Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     Toast.makeText(NavMapActivity.this, "Please turn on Location", Toast.LENGTH_LONG).show();
                     mMap.clear();
                     enableMapLocation(false);
-                    sharedLocation = false;
                 }
             }
         });
@@ -203,44 +203,4 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             }
         }
     }
-
-//    private void getLocationPermission() {
-//        Log.d(TAG, "getLocationPermission: getting location permissions");
-//        String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION,
-//        Manifest.permission.ACCESS_COARSE_LOCATION};
-//
-//        if (ContextCompat.checkSelfPermission(this.getApplicationContext(), FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-//            if (ContextCompat.checkSelfPermission(this.getApplicationContext(), COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-//                mLocationPermissionGranted = true;
-//                initMap();
-//            } else {
-//                ActivityCompat.requestPermissions(this, permissions, LOCATION_REQ_CODE);
-//            }
-//        } else {
-//            ActivityCompat.requestPermissions(this, permissions, LOCATION_REQ_CODE);
-//        }
-//    }
-
-//    @Override
-//    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-//        Log.d(TAG, "onRequestPermissionsResult: called");
-//        mLocationPermissionGranted = false;
-//
-//        switch(requestCode) {
-//            case  LOCATION_REQ_CODE :{
-//                if (grantResults.length > 0) {
-//                    for (int i = 0; i < grantResults.length; i++) {
-//                        if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
-//                            mLocationPermissionGranted = false;
-//                            Log.d(TAG, "onRequestPermissionsResult: permission failed");
-//                            return;
-//                        }
-//                    }
-//                    mLocationPermissionGranted = true;
-//                    Log.d(TAG, "onRequestPermissionsResult: permission granted");
-//                    initMap();
-//                }
-//            }
-//        }
-//    }
 }
