@@ -54,7 +54,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         gpsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                sharedLocation = !sharedLocation;
 
                 if (!mLocationPermissionGranted) {
                     getLocationPermission();
@@ -63,6 +62,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
 
                 if (hasPermissionAndLocation()) {
+                    sharedLocation = !sharedLocation;
+
                     if (sharedLocation) {
                         enableMapLocation(true);
                         resetMap();
@@ -75,9 +76,10 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                         Toast.makeText(NavMapActivity.this, "Your location is hidden from other users", Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    Toast.makeText(NavMapActivity.this, "onClick: Please turn on Location", Toast.LENGTH_LONG).show();
+                    Toast.makeText(NavMapActivity.this, "Please turn on Location", Toast.LENGTH_LONG).show();
                     mMap.clear();
                     enableMapLocation(false);
+                    sharedLocation = false;
                 }
             }
         });
@@ -105,7 +107,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             sharedLocation = true;
             setCircle();
         } else {
-            Toast.makeText(this, "onMapReady: Please turn on Location", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Please turn on Location", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -145,8 +147,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private void resetMap() {
         mMap.clear();
         setMapSettings();
-        setCircle();
         updateDeviceLocation();
+        setCircle();
     }
 
     private void setCircle() {
@@ -159,7 +161,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
 
     private boolean hasPermissionAndLocation() {
-            return (ActivityCompat.checkSelfPermission(this, FINE_LOCATION ) == PackageManager.PERMISSION_GRANTED && locationManager.isLocationEnabled());
+            return (mLocationPermissionGranted && locationManager.isLocationEnabled());
     }
 
     private boolean enableMapLocation(boolean status) {
