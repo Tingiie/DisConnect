@@ -127,37 +127,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void signOut(){
-        FirebaseAuth.getInstance().signOut();
-        Intent intent = new Intent(this, LogInActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
-    }
-
-    //Menyraden
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch(item.getItemId()){
-            case R.id.action_sign_out:{
-                signOut();
-                return true;
-            }
-
-            default:{
-                return super.onOptionsItemSelected(item);
-            }
-        }
-
-    }
 
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
 
 
 
