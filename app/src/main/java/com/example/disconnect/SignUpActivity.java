@@ -109,7 +109,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
                         }
                         else {
                             View parentLayout = findViewById(android.R.id.content);
-                            Snackbar.make(parentLayout, "Something went wrong.", Snackbar.LENGTH_SHORT).show();
+                            Snackbar.make(parentLayout, "Password requires at least 6 characters.", Snackbar.LENGTH_SHORT).show();
                             hideDialog();
                         }
 

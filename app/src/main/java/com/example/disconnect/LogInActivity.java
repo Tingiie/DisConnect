@@ -113,8 +113,8 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
                             }
                         }
                     });
-
-                    Intent intent = new Intent(LogInActivity.this, NavMapActivity.class);
+                    // Här blir det knas om jag ändrar mainactivity till navmapactiviity
+                    Intent intent = new Intent(LogInActivity.this, MainActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
                     finish();
@@ -169,7 +169,7 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
                     }).addOnFailureListener(new OnFailureListener() {
                 @Override
                 public void onFailure(@NonNull Exception e) {
-                    Toast.makeText(LogInActivity.this, "Authentication Failed", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LogInActivity.this, "Incorrect Email or Password", Toast.LENGTH_SHORT).show();
                     hideDialog();
                 }
             });
