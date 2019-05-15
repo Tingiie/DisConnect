@@ -18,6 +18,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -25,6 +26,8 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+
+import java.util.Calendar;
 
 public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -41,12 +44,15 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private LatLng currentLatLng;
     private boolean mLocationPermissionGranted = false;
     private Circle mapCircle;
+    private User user = new User("user1@gmail.com", "user1", "Tingiie", true );
 
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_nav_map);
+
+        HandshakeDetector handShakeDetector = new HandshakeDetector(this);
 
         locationListener = new MyLocationListener(this, DEFAULT_ZOOM);
         locationManager=(LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
@@ -187,6 +193,15 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         } else {
             ActivityCompat.requestPermissions(this, permission, LOCATION_REQ_CODE);
         }
+    }
+
+    public void onHandshakeConnection(){
+        user.setHandshakeDetected(true);
+        user.setHandShakeTime(Calendar.getInstance().getTime());
+
+        Toast.makeText(NavMapActivity.this, user.getHandShakeTime().toString(), Toast.LENGTH_SHORT).show();
+
+
     }
 
     @Override
