@@ -198,7 +198,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     public void onHandshakeConnection(){
         user.setHandshakeDetected(true);
         user.setHandShakeTime(Calendar.getInstance().getTime());
-
         Toast.makeText(NavMapActivity.this, user.getHandShakeTime().toString(), Toast.LENGTH_SHORT).show();
 
 

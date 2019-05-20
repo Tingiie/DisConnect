@@ -14,8 +14,7 @@ import com.google.android.gms.maps.model.LatLng;
 public class HandshakeDetector implements ShakeDetector.ShakeListener {
 
 private NavMapActivity activity;
-private LatLng islamabad = new LatLng(33, 73
-);
+private LatLng islamabad = new LatLng(33, 73);
 
     public HandshakeDetector(NavMapActivity activity){
         this.activity = activity;
