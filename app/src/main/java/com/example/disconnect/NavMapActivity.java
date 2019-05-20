@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -22,9 +21,13 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.util.ArrayList;
 
 public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -37,10 +40,12 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private GoogleMap mMap;
     private LocationManager locationManager;
     private MyLocationListener locationListener;
-    private boolean sharedLocation = false;
+    private boolean shareLocation = false;
     private LatLng currentLatLng;
+    private Location currentLocation;
     private boolean mLocationPermissionGranted = false;
     private Circle mapCircle;
+    private ArrayList<User> userList;
 
 
     @Override
@@ -49,7 +54,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         setContentView(R.layout.activity_nav_map);
 
         locationListener = new MyLocationListener(this, DEFAULT_ZOOM);
-        locationManager=(LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
         FloatingActionButton gpsButton = findViewById(R.id.gps_button);
         gpsButton.setOnClickListener(new View.OnClickListener() {
@@ -60,21 +65,21 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                     initMap();
                 }
 
-                sharedLocation = !sharedLocation;
+                shareLocation = !shareLocation;
 
                 if (hasPermissionAndLocation()) {
 
-                    if (sharedLocation) {
+                    if (shareLocation) {
                         Toast.makeText(NavMapActivity.this, "Your location is visible to other users", Toast.LENGTH_SHORT).show();
                         resetMap();
                         enableMapLocation(true);
-                        sharedLocation = true;
+                        shareLocation = true;
                     } else {
                         Toast.makeText(NavMapActivity.this, "Your location is hidden from other users", Toast.LENGTH_SHORT).show();
 
                         mMap.clear();
                         enableMapLocation(false);
-                        sharedLocation = false;
+                        shareLocation = false;
                     }
                 } else {
                     Toast.makeText(NavMapActivity.this, "Please turn on Location", Toast.LENGTH_LONG).show();
@@ -104,7 +109,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             setMapSettings();
             updateDeviceLocation();
             enableMapLocation(true);
-            sharedLocation = true;
+            shareLocation = true;
             setCircle();
         } else {
             Toast.makeText(this, "Please turn on Location", Toast.LENGTH_LONG).show();
@@ -119,9 +124,11 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 locationManager.requestLocationUpdates("gps",
                         2000,
                         0, locationListener);
-                Location currentLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                currentLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                 currentLatLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
                 moveCamera(currentLatLng, DEFAULT_ZOOM);
+                createNearbyMarker();
+                createDistantMarker();
             } else {
                 Log.d(TAG, "updateDeviceLocation: current location is null");
                 Toast.makeText(NavMapActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
@@ -140,7 +147,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private void setMapSettings() {
         mMap.getUiSettings().setAllGesturesEnabled(false);
         mMap.getUiSettings().setMyLocationButtonEnabled(false);
-        mMap.getUiSettings().setCompassEnabled(true);
+        mMap.getUiSettings().setCompassEnabled(false);
     }
 
     private void resetMap() {
@@ -207,5 +214,35 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 }
             }
         }
+    }
+
+    public void createDistantMarker() {
+        Location l1 = new Location(currentLocation);
+        LatLng ll1 = new LatLng(55.714911, 13.215717);
+
+        l1.setLatitude(ll1.latitude);
+        l1.setLongitude(ll1.longitude);
+
+        CircleOptions distantOpt = new CircleOptions()
+                .center(ll1)
+                .clickable(false)
+                .radius(10)
+                .strokeColor(Color.LTGRAY)
+                .fillColor(Color.LTGRAY);
+        mMap.addCircle(distantOpt);
+    }
+
+    private void createNearbyMarker(){
+        Location l2 = new Location(currentLocation);
+        LatLng ll2 = new LatLng(55.710365, 13.208238);
+
+        l2.setLatitude(ll2.latitude);
+        l2.setLongitude(ll2.longitude);
+
+        MarkerOptions nearbyOpt = new MarkerOptions()
+            .position(ll2)
+            .icon(BitmapDescriptorFactory.fromResource(R.drawable.pink_marker));
+
+        mMap.addMarker(nearbyOpt);
     }
 }
