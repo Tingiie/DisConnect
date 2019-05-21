@@ -1,7 +1,10 @@
 package com.example.disconnect;
 
+import android.location.Location;
 import android.os.Parcel;
 import android.os.Parcelable;
+
+import java.util.Date;
 
 public class User implements Parcelable{
 
@@ -9,14 +12,26 @@ public class User implements Parcelable{
     private String user_id;
     private String username;
     private boolean active;
-  //  private String avatar;
+    private Location location;
+    private boolean handshakeDetected;
+    private Date handShakeTime;
+    private User potentialMatch;
+    private int connectionCounter;
 
-    public User(String email, String user_id, String username, boolean active /*, String avatar*/) {
-        this.email = email;
-        this.active = active;
+
+
+    //  private String avatar;
+
+    public User( boolean active, int connectionCounter , String email,Date handShakeTime, boolean handshakeDetected, Location location,User potentialMatch,  String user_id, String username ) {
         this.user_id = user_id;
+        this.active = active;
+        this.connectionCounter = connectionCounter;
+        this.email = email;
         this.username = username;
-        //this.avatar = avatar;
+        this.handshakeDetected = handshakeDetected;
+        this.handShakeTime = handShakeTime;
+        this.location = location;
+        this.potentialMatch = potentialMatch;
     }
 
     public User() {
@@ -28,7 +43,7 @@ public class User implements Parcelable{
         user_id = in.readString();
         username = in.readString();
         active = Boolean.parseBoolean(in.readString());
-       // avatar = in.readString();
+        // avatar = in.readString();
     }
 
     public static final Creator<User> CREATOR = new Creator<User>() {
@@ -42,15 +57,14 @@ public class User implements Parcelable{
             return new User[size];
         }
     };
-/*
-    public String getAvatar() {
-        return avatar;
-    }
-
-    public void setAvatar(String avatar) {
-        this.avatar = avatar;
-    }
-*/
+    /*
+        public String getAvatar() {
+            return avatar;
+        }
+        public void setAvatar(String avatar) {
+            this.avatar = avatar;
+        }
+    */
     public static Creator<User> getCREATOR() {
         return CREATOR;
     }
@@ -107,7 +121,46 @@ public class User implements Parcelable{
         dest.writeString(email);
         dest.writeString(user_id);
         dest.writeString(username);
-       // dest.writeString(avatar);
+        // dest.writeString(avatar);
+    }
+
+    public boolean isHandshakeDetected() {
+        return handshakeDetected;
+    }
+
+    public void setHandshakeDetected(boolean handshakeDetected) {
+        this.handshakeDetected = handshakeDetected;
+    }
+
+    public Location getLocation() {
+        return location;
+    }
+
+    public void setLocation(Location location) {
+        this.location = location;
+    }
+
+    public Date getHandShakeTime() {
+        return handShakeTime;
+    }
+
+    public void setHandShakeTime(Date handShakeTime) {
+        this.handShakeTime = handShakeTime;
+    }
+
+    public User getPotentialMatch() {
+        return potentialMatch;
+    }
+
+    public void setPotentialMatch(User potentialMatch) {
+        this.potentialMatch = potentialMatch;
+    }
+
+    public int getConnectionCounter() {
+        return connectionCounter;
+    }
+
+    public void incConnectionCounter() {
+        this.connectionCounter++;
     }
 }
-

@@ -92,7 +92,7 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user != null) {
                     Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
-                    Toast.makeText(LogInActivity.this, "Authenticated with: " + user.getEmail(), Toast.LENGTH_SHORT).show();
+                 //   Toast.makeText(LogInActivity.this, "Authenticated with: " + user.getEmail(), Toast.LENGTH_SHORT).show();
 
                     FirebaseFirestore db = FirebaseFirestore.getInstance();
                     FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
@@ -114,7 +114,7 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
                         }
                     });
 
-                    Intent intent = new Intent(LogInActivity.this, NavMapActivity.class);
+                    Intent intent = new Intent(LogInActivity.this, MainActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
                     finish();

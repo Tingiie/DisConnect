@@ -14,6 +14,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -31,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     private UserLocation mUserLocation;
     private FirebaseFirestore mDb;
     private FusedLocationProviderClient mFusedLocationClient;
+    private User user;
 
 
 
@@ -54,7 +56,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        getUserDetails();
+        //getUserDetails();
+        User user = getUserInformation();
+      //  Log.d(TAG, "User: " + user.getEmail());
 
 
     }
@@ -125,6 +129,38 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+    }
+
+    public User getUserInformation(){
+
+        DocumentReference drf = mDb
+                .collection(getString(R.string.collection_user_locations))
+                .document("nhGgybFbM1N3IP04OlLHCYufqFp1"
+                );
+
+
+        Task<DocumentSnapshot> hej = drf.get();
+
+        drf.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if(task.isSuccessful()){
+                 //   User user = new User();
+                 //   user
+                 //           .setLocation();
+
+
+                 //   user = task.getResult().toObject(User.class);
+
+                    Log.d(TAG, "HEJHEJ" + task.getResult().toString());
+                    Log.d(TAG, "HEJHEJ " + task.getResult().getData().containsValue("hejwilliam@hmail.cln")  + " " + task.getResult().getGeoPoint("geo_point") + task.getResult().getDate("timestamp"));
+                            ;
+                }
+
+            }
+        });
+
+        return user;
     }
 
 
