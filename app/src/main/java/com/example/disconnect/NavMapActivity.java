@@ -37,7 +37,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private static final String TAG = "NavMapActivity";
     private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
     private static final int LOCATION_REQ_CODE = 1234;
-    private static final float DEFAULT_ZOOM = 15f;
+    private static final float DEFAULT_ZOOM = 17f;
     private String[] permission = {Manifest.permission.ACCESS_FINE_LOCATION};
 
     private GoogleMap mMap;
@@ -80,7 +80,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                         shareLocation = true;
                     } else {
                         Toast.makeText(NavMapActivity.this, "Your location is hidden from other users", Toast.LENGTH_SHORT).show();
-
+                        offline();
                         mMap.clear();
                         enableMapLocation(false);
                         shareLocation = false;
@@ -117,11 +117,13 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             enableMapLocation(true);
             shareLocation = true;
             setCircle();
+            centerMap(currentLatLng);
             mMap.setOnCircleClickListener(new GoogleMap.OnCircleClickListener() {
                 @Override
                 public void onCircleClick(Circle circle) {
                     if (circle.equals(myCircle)) {
                         Toast.makeText(NavMapActivity.this, "Status: " + status, Toast.LENGTH_SHORT).show();
+                        awaitingHandshake();
                     } else {
                         Toast.makeText(NavMapActivity.this, "A toast", Toast.LENGTH_SHORT).show();
                     }
@@ -133,7 +135,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
     }
 
-    private void updateDeviceLocation() {
+    public void updateDeviceLocation() {
         Log.d(TAG, "updateDeviceLocation: getting the device's current location");
 
         try {
@@ -144,9 +146,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                         0, locationListener);
                 currentLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                 currentLatLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
-                moveCamera(currentLatLng, DEFAULT_ZOOM);
-                createNearbyMarker();
-                createDistantMarker();
+                createNearbyMarker();       //TODO: Remove later
+                createDistantMarker();      //TODO: Remove later
             } else {
                 offline();
                 Log.d(TAG, "updateDeviceLocation: current location is null");
@@ -167,7 +168,9 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private void setMapSettings() {
         mMap.getUiSettings().setAllGesturesEnabled(false);
         mMap.getUiSettings().setMyLocationButtonEnabled(false);
-        mMap.getUiSettings().setCompassEnabled(false);
+        mMap.getUiSettings().setRotateGesturesEnabled(true);
+        mMap.getUiSettings().setTiltGesturesEnabled(true);
+        mMap.getUiSettings().setCompassEnabled(true);
     }
 
     private void resetMap() {
@@ -175,12 +178,13 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         setMapSettings();
         updateDeviceLocation();
         setCircle();
+        centerMap(currentLatLng);
     }
 
     private void setCircle() {
         mapCircle = mMap.addCircle(new CircleOptions()
                 .center(currentLatLng)
-                .radius(300)
+                .radius(100)
                 .strokeColor(Color.argb(150,00,100, 210))
                 .fillColor(Color.argb(50,00,100, 210)));
     }
@@ -286,6 +290,14 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         status = "Awaiting handshake";
     }
 
+    public Location getCurrentLocation() {
+        return currentLocation;
+    }
+
+    public void centerMap(LatLng center) {
+        moveCamera(center, DEFAULT_ZOOM);
+        moveCircle(center);
+    }
 
 //    private void createNearbyMarker(){
 //        Location l2 = new Location(currentLocation);

@@ -24,8 +24,7 @@ public class MyLocationListener implements LocationListener {
         latitude = location.getLatitude();
         longitude = location.getLongitude();
         latlng = new LatLng(latitude, longitude);
-        mapActivity.moveCamera(latlng, mapZoom);
-        mapActivity.moveCircle(latlng);
+        mapActivity.centerMap(latlng);
     }
 
     public double getLongitude(){
