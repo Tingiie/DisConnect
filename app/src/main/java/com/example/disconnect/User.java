@@ -3,6 +3,10 @@ package com.example.disconnect;
 import android.location.Location;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
+
+import com.google.firebase.firestore.GeoPoint;
+import com.google.firebase.firestore.ServerTimestamp;
 
 import java.util.Date;
 
@@ -17,12 +21,15 @@ public class User implements Parcelable{
     private Date handShakeTime;
     private User potentialMatch;
     private int connectionCounter;
+    private GeoPoint geo_point = new GeoPoint(1.0,2.0);
+    private @ServerTimestamp
+    Date timestamp;
 
 
 
     //  private String avatar;
 
-    public User( boolean active, int connectionCounter , String email,Date handShakeTime, boolean handshakeDetected, Location location,User potentialMatch,  String user_id, String username ) {
+    public User( boolean active, int connectionCounter , String email,Date handShakeTime, boolean handshakeDetected, Location location,User potentialMatch,  String user_id, String username, GeoPoint geo_point, Date timestamp ) {
         this.user_id = user_id;
         this.active = active;
         this.connectionCounter = connectionCounter;
@@ -32,6 +39,8 @@ public class User implements Parcelable{
         this.handShakeTime = handShakeTime;
         this.location = location;
         this.potentialMatch = potentialMatch;
+        this.geo_point = geo_point;
+        this.timestamp = timestamp;
     }
 
     public User() {
@@ -43,6 +52,8 @@ public class User implements Parcelable{
         user_id = in.readString();
         username = in.readString();
         active = Boolean.parseBoolean(in.readString());
+        timestamp = null;
+
         // avatar = in.readString();
     }
 
@@ -107,9 +118,13 @@ public class User implements Parcelable{
                 "email='" + email + '\'' +
                 ", user_id='" + user_id + '\'' +
                 ", username='" + username + '\'' +
-                '}';
+               " UserLocation{" +
+                    ", geo_point=" + geo_point +
+                    ", timestamp=" + timestamp +
+                    '}';
         //", avatar='" + avatar + '\'' +
     }
+
 
     @Override
     public int describeContents() {
@@ -130,6 +145,22 @@ public class User implements Parcelable{
 
     public void setHandshakeDetected(boolean handshakeDetected) {
         this.handshakeDetected = handshakeDetected;
+    }
+
+    public GeoPoint getGeo_point() {
+        return geo_point;
+    }
+
+    public void setGeo_point(GeoPoint geo_point) {
+        this.geo_point = geo_point;
+    }
+
+    public Date getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(Date timestamp) {
+        this.timestamp = timestamp;
     }
 
     public Location getLocation() {

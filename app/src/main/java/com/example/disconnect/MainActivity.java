@@ -29,10 +29,10 @@ import com.google.firebase.firestore.GeoPoint;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
-    private UserLocation mUserLocation;
+  //  private UserLocation mUserLocation;
     private FirebaseFirestore mDb;
     private FusedLocationProviderClient mFusedLocationClient;
-    private User user;
+    private User mUser;
 
 
 
@@ -64,27 +64,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getUserDetails(){
-        if(mUserLocation == null){
-
-            mUserLocation = new UserLocation();
-            DocumentReference userRef = mDb.collection(getString(R.string.collection_users))
-                    .document(FirebaseAuth.getInstance().getUid());
-
-            userRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-                @Override
-                public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                    if(task.isSuccessful()){
-                        Log.d(TAG, "onComplete: successfully set the user client.");
-                        User user = task.getResult().toObject(User.class);
-                        mUserLocation.setUser(user);
-                        getLastKnownLocation();
-                    }
-                }
-            });
-        }
-        else{
             getLastKnownLocation();
-        }
     }
 
     private void getLastKnownLocation() {
@@ -101,8 +81,11 @@ public class MainActivity extends AppCompatActivity {
                     Location location = task.getResult();
                     GeoPoint geoPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
                     // Här skickas geopoint och timestamp in i FireBase.
-                    mUserLocation.setGeo_point(geoPoint);
-                    mUserLocation.setTimestamp(null);
+                    if (geoPoint!=null){
+                        Log.d(TAG, "its not null");
+                        mUser.setGeo_point(geoPoint);
+                    }
+                    mUser.setTimestamp(null);
                     saveUserLocation();
                 }
             }
@@ -113,18 +96,18 @@ public class MainActivity extends AppCompatActivity {
     private void saveUserLocation(){
         // Här sparas informationen i FireBase.
 
-        if(mUserLocation != null){
+        if(mUser != null){
             DocumentReference locationRef = mDb
-                    .collection(getString(R.string.collection_user_locations))
+                    .collection(getString(R.string.collection_users))
                     .document(FirebaseAuth.getInstance().getUid());
 
-            locationRef.set(mUserLocation).addOnCompleteListener(new OnCompleteListener<Void>() {
+            locationRef.set(mUser).addOnCompleteListener(new OnCompleteListener<Void>() {
                 @Override
                 public void onComplete(@NonNull Task<Void> task) {
                     if(task.isSuccessful()){
                         Log.d(TAG, "saveUserLocation: \ninserted user location into database." +
-                                "\n latitude: " + mUserLocation.getGeo_point().getLatitude() +
-                                "\n longitude: " + mUserLocation.getGeo_point().getLongitude());
+                                "\n latitude: " + mUser.getGeo_point().getLatitude() +
+                                "\n longitude: " + mUser.getGeo_point().getLongitude());
                     }
                 }
             });
@@ -134,13 +117,15 @@ public class MainActivity extends AppCompatActivity {
     public User getUserInformation(){
 
         DocumentReference drf = mDb
-                .collection(getString(R.string.collection_user_locations))
-                .document("nhGgybFbM1N3IP04OlLHCYufqFp1"
+                .collection(getString(R.string.collection_users))
+                .document("9XwdGcs6dleIMZmtHy11JBEeQ013"
                 );
 
 
-        Task<DocumentSnapshot> hej = drf.get();
 
+
+        Task<DocumentSnapshot> hej = drf.get();
+        getLastKnownLocation();
         drf.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
@@ -153,14 +138,15 @@ public class MainActivity extends AppCompatActivity {
                  //   user = task.getResult().toObject(User.class);
 
                     Log.d(TAG, "HEJHEJ" + task.getResult().toString());
-                    Log.d(TAG, "HEJHEJ " + task.getResult().getData().containsValue("hejwilliam@hmail.cln")  + " " + task.getResult().getGeoPoint("geo_point") + task.getResult().getDate("timestamp"));
+                    Log.d(TAG, "HEJHEJ " + " GEOPOINT " + /*+ task.getResult().getData().containsValue("edvinheterjag@edvin.se")  + */" " + task.getResult().getGeoPoint("geo_point") + task.getResult().getDate("timestamp"));
+
                             ;
                 }
 
             }
         });
 
-        return user;
+        return null;
     }
 
 
