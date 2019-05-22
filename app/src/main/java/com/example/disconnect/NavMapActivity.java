@@ -138,8 +138,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
         try {
             if (hasPermissionAndLocation()) {
-                
-                status = "Online";
+                online();
                 locationManager.requestLocationUpdates("gps",
                         2000,
                         0, locationListener);
@@ -149,12 +148,12 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 createNearbyMarker();
                 createDistantMarker();
             } else {
-                status = "Offline";
+                offline();
                 Log.d(TAG, "updateDeviceLocation: current location is null");
                 Toast.makeText(NavMapActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
             }
         } catch (SecurityException e) {
-            status = "Offline";
+            offline();
             Log.d(TAG, "updateDeviceLocation: SecurityException: " + e.getMessage());
             Toast.makeText(NavMapActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
         }
