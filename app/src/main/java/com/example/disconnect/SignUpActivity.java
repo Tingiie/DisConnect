@@ -82,6 +82,10 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
                             user.setEmail(email);
                             user.setUsername(email.substring(0, email.indexOf("@")));
                             user.setUser_id(FirebaseAuth.getInstance().getUid());
+                            user.setHandshakeDetected(false);
+                            user.setHandShakeTime(null);
+                            user.setPotentialMatch(null);
+
 
                             FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
                                     .setTimestampsInSnapshotsEnabled(true)

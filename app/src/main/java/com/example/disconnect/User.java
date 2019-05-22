@@ -29,7 +29,7 @@ public class User implements Parcelable{
 
     //  private String avatar;
 
-    public User( boolean active, int connectionCounter , String email,Date handShakeTime, boolean handshakeDetected, Location location,User potentialMatch,  String user_id, String username, GeoPoint geo_point, Date timestamp ) {
+    public User( boolean active, int connectionCounter , String email,Date handShakeTime, boolean handshakeDetected,User potentialMatch,  String user_id, String username, GeoPoint geo_point, Date timestamp ) {
         this.user_id = user_id;
         this.active = active;
         this.connectionCounter = connectionCounter;
@@ -37,7 +37,6 @@ public class User implements Parcelable{
         this.username = username;
         this.handshakeDetected = handshakeDetected;
         this.handShakeTime = handShakeTime;
-        this.location = location;
         this.potentialMatch = potentialMatch;
         this.geo_point = geo_point;
         this.timestamp = timestamp;

@@ -22,10 +22,15 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
+import com.google.firebase.firestore.QuerySnapshot;
+
+import java.util.ArrayList;
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -33,6 +38,8 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseFirestore mDb;
     private FusedLocationProviderClient mFusedLocationClient;
     private User mUser;
+    private ArrayList<User> allUsersList;
+    private ArrayList<String> idList;
 
 
 
@@ -55,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
                 startMapActivity(view);
             }
         });
-
+        getAllUsers();
         getUserDetails();
         //User user = getUserInformation();
       //  Log.d(TAG, "User: " + user.getEmail());
@@ -77,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
                            User user = task.getResult().toObject(User.class);
                             mUser = task.getResult().toObject(User.class);
                         Log.d(TAG, "HEJHEJ" + task.getResult().toString());
-                        Log.d(TAG, "HEJHEJ " + " GEOPOINT " + /*+ task.getResult().getData().containsValue("edvinheterjag@edvin.se")  + */" " + task.getResult().getGeoPoint("geo_point") + task.getResult().getDate("timestamp"));
+                        Log.d(TAG, "HEJHEJ " + " GEOPOINT " + /*+ task.getResult().getData().containsValue("edvinheterjag@edvin.se")  + */" LATIDUDE: " + task.getResult().getGeoPoint("geo_point").getLatitude() + " DATE: " + task.getResult().getDate("timestamp"));
 
 
                         getLastKnownLocation();
@@ -89,6 +96,85 @@ public class MainActivity extends AppCompatActivity {
             getLastKnownLocation();
         }
     }
+
+
+    private void getAllUsers(){
+        allUsersList = new ArrayList<>();
+        
+
+        CollectionReference usersRef = mDb
+                .collection(getString(R.string.collection_users));
+
+
+
+        usersRef.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+
+
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                if (task.isSuccessful()) {
+                    idList = new ArrayList<>();
+                    ArrayList<DocumentSnapshot> resultList = (ArrayList)task.getResult().getDocuments();
+
+                    for(int i = 0; i < resultList.size(); i++){
+                        idList.add(resultList.get(i).getId());
+                    }
+
+                    for(String id : idList) {
+                        DocumentReference userRef = mDb.collection(getString(R.string.collection_users))
+                                .document(id);
+
+                        userRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                            @Override
+                            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                                if (task.isSuccessful()) {
+                                    Log.d(TAG, "onComplete: successfully set the user client.");
+
+                                    Boolean active = task.getResult().getBoolean("active");
+                                    //Boolean active = true;
+                                    //Sätts till 0 pga null i Firebase. Ska senare använda:
+                                    int conncount = Math.toIntExact((long)task.getResult().get("connectionCounter"));
+                                   // int conncount = 0;
+                                    String email = task.getResult().getString("email");
+                                    Date handshakeTime = task.getResult().getDate("handShakeTime");
+
+
+                                    Boolean handshakeDetected = task.getResult().getBoolean("handshakeDetected");
+
+                                    User potentialMatch = (User)task.getResult().get("potentialMatch");
+
+                                    String user_id = task.getResult().getString("user_id");
+                                    String username = task.getResult().getString("username");
+                                    GeoPoint geoPoint = task.getResult().getGeoPoint("geo_point");
+                                    Date timestamp = task.getResult().getDate("timestamp");
+
+
+
+                                    User user = new User(active, conncount, email, handshakeTime, handshakeDetected, potentialMatch, user_id, username, geoPoint, timestamp);
+                                    allUsersList.add(user);
+                                    Log.d(TAG, "Rövballe" + allUsersList.toString());
+
+                                //    mUser = task.getResult().toObject(User.class);
+  //                                  Log.d(TAG, "HEJHEJ" + task.getResult().toString());
+//                                    Log.d(TAG, "HEJHEJ " + " GEOPOINT " + /*+ task.getResult().getData().containsValue("edvinheterjag@edvin.se")  + */" LATIDUDE: " + task.getResult().getGeoPoint("geo_point").getLatitude() + " DATE: " + task.getResult().getDate("timestamp"));
+
+
+                                }
+                            }
+                        });
+
+                    }
+                    //Log.d(TAG, "BALLEDRÄNG" + idList.toString());
+                }
+            }
+
+        });
+    }
+
+
+
+
+
 
     private void getLastKnownLocation() {
         Log.d(TAG, "getLastKnownLocation: called.");
