@@ -22,6 +22,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 
@@ -39,6 +40,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private boolean sharedLocation = false;
     private LatLng currentLatLng;
     private boolean mLocationPermissionGranted = false;
+    private Circle mapCircle;
 
 
     @Override
@@ -46,15 +48,13 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_nav_map);
 
-        locationListener = new MyLocationListener();
+        locationListener = new MyLocationListener(this, DEFAULT_ZOOM);
         locationManager=(LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
         FloatingActionButton gpsButton = findViewById(R.id.gps_button);
-
         gpsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 if (!mLocationPermissionGranted) {
                     getLocationPermission();
                     initMap();
@@ -129,11 +129,10 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         } catch (SecurityException e) {
         Log.d(TAG, "updateDeviceLocation: SecurityException: " + e.getMessage());
         Toast.makeText(NavMapActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
-
         }
     }
 
-    private void moveCamera(LatLng latlng, float zoom){
+    public void moveCamera(LatLng latlng, float zoom){
         Log.d(TAG, "moveCamera: moving the camera to Latitude: " + latlng.latitude + ", longitude: " + latlng.longitude);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latlng, zoom));
     }
@@ -152,11 +151,17 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     }
 
     private void setCircle() {
-        mMap.addCircle(new CircleOptions()
+        mapCircle = mMap.addCircle(new CircleOptions()
                 .center(currentLatLng)
                 .radius(300)
                 .strokeColor(Color.argb(150,00,100, 210))
                 .fillColor(Color.argb(50,00,100, 210)));
+    }
+
+    public void moveCircle(LatLng latLng) {
+        if (mapCircle != null) {
+            mapCircle.setCenter(latLng);
+        }
     }
 
 
