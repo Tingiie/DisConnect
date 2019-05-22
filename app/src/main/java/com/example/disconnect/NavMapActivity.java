@@ -3,6 +3,7 @@ package com.example.disconnect;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
@@ -21,10 +22,12 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.ArrayList;
@@ -46,7 +49,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private boolean mLocationPermissionGranted = false;
     private Circle mapCircle;
     private ArrayList<User> userList;
-
+    private String status;
+    private Circle myCircle;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -55,7 +59,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
         locationListener = new MyLocationListener(this, DEFAULT_ZOOM);
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-
+        offline();
         FloatingActionButton gpsButton = findViewById(R.id.gps_button);
         gpsButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -68,7 +72,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 shareLocation = !shareLocation;
 
                 if (hasPermissionAndLocation()) {
-
+                    online();
                     if (shareLocation) {
                         Toast.makeText(NavMapActivity.this, "Your location is visible to other users", Toast.LENGTH_SHORT).show();
                         resetMap();
@@ -82,6 +86,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                         shareLocation = false;
                     }
                 } else {
+                    offline();
                     Toast.makeText(NavMapActivity.this, "Please turn on Location", Toast.LENGTH_LONG).show();
                     mMap.clear();
                     enableMapLocation(false);
@@ -106,12 +111,24 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         mMap = googleMap;
 
         if (hasPermissionAndLocation()) {
+            online();
             setMapSettings();
             updateDeviceLocation();
             enableMapLocation(true);
             shareLocation = true;
             setCircle();
+            mMap.setOnCircleClickListener(new GoogleMap.OnCircleClickListener() {
+                @Override
+                public void onCircleClick(Circle circle) {
+                    if (circle.equals(myCircle)) {
+                        Toast.makeText(NavMapActivity.this, "Status: " + status, Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(NavMapActivity.this, "A toast", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
         } else {
+            offline();
             Toast.makeText(this, "Please turn on Location", Toast.LENGTH_LONG).show();
         }
     }
@@ -121,6 +138,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
         try {
             if (hasPermissionAndLocation()) {
+                
+                status = "Online";
                 locationManager.requestLocationUpdates("gps",
                         2000,
                         0, locationListener);
@@ -130,12 +149,14 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 createNearbyMarker();
                 createDistantMarker();
             } else {
+                status = "Offline";
                 Log.d(TAG, "updateDeviceLocation: current location is null");
                 Toast.makeText(NavMapActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
             }
         } catch (SecurityException e) {
-        Log.d(TAG, "updateDeviceLocation: SecurityException: " + e.getMessage());
-        Toast.makeText(NavMapActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
+            status = "Offline";
+            Log.d(TAG, "updateDeviceLocation: SecurityException: " + e.getMessage());
+            Toast.makeText(NavMapActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -232,17 +253,53 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         mMap.addCircle(distantOpt);
     }
 
-    private void createNearbyMarker(){
-        Location l2 = new Location(currentLocation);
-        LatLng ll2 = new LatLng(55.710365, 13.208238);
+    public void createNearbyMarker() {
+        Location l1 = new Location(currentLocation);
+        LatLng ll1 = new LatLng(55.714596, 13.212890);
 
-        l2.setLatitude(ll2.latitude);
-        l2.setLongitude(ll2.longitude);
+        l1.setLatitude(ll1.latitude);
+        l1.setLongitude(ll1.longitude);
 
-        MarkerOptions nearbyOpt = new MarkerOptions()
-            .position(ll2)
-            .icon(BitmapDescriptorFactory.fromResource(R.drawable.pink_marker));
 
-        mMap.addMarker(nearbyOpt);
+        CircleOptions distantOpt = new CircleOptions()
+                .center(ll1)
+                .clickable(false)
+                .radius(20)
+                .strokeColor(Color.WHITE)
+                .fillColor(Color.MAGENTA)
+                .zIndex(2);
+        myCircle = mMap.addCircle(distantOpt);
     }
+
+    private void offline() {
+        status = "Offline";
+    }
+
+    private void online() {
+        status = "Online";
+    }
+
+    private void nearbyUsers(int count) {
+        status = "Nearby users: " + count;
+    }
+
+    private void awaitingHandshake() {
+        status = "Awaiting handshake";
+    }
+
+
+//    private void createNearbyMarker(){
+//        Location l2 = new Location(currentLocation);
+//        LatLng ll2 = new LatLng(55.710365, 13.208238);
+//
+//        l2.setLatitude(ll2.latitude);
+//        l2.setLongitude(ll2.longitude);
+//        BitmapDescriptor pinkMarker = BitmapDescriptorFactory.fromResource(R.drawable.pngrosa2);
+//
+//        MarkerOptions nearbyOpt = new MarkerOptions()
+//            .position(ll2)
+//            .icon(pinkMarker);
+//
+//        mMap.addMarker(nearbyOpt);
+//    }
 }
