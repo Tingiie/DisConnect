@@ -22,4 +22,9 @@
     <color name="transparentGrey">#8f737373 </color>
     <color name="DarkGrey">#737373 </color>
     <color name="Black">#000000</color>
+    <color name="BlueDark">#495f6a</color>
+    <color name="BlueLight">#49acd5</color>
+    <color name="Green">#45bc62</color>
+    <color name="Orange">#eaad43</color>
+
 </resources>
