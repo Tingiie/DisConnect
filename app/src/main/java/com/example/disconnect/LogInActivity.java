@@ -92,7 +92,7 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user != null) {
                     Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
-                 //   Toast.makeText(LogInActivity.this, "Authenticated with: " + user.getEmail(), Toast.LENGTH_SHORT).show();
+                   Toast.makeText(LogInActivity.this, "Authenticated with: " + user.getEmail(), Toast.LENGTH_SHORT).show();
 
                     FirebaseFirestore db = FirebaseFirestore.getInstance();
                     FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()

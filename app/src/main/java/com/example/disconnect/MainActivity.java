@@ -56,15 +56,38 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        //getUserDetails();
-        User user = getUserInformation();
+        getUserDetails();
+        //User user = getUserInformation();
       //  Log.d(TAG, "User: " + user.getEmail());
 
 
     }
 
     private void getUserDetails(){
+        if(mUser == null){
+            mUser = new User();
+            DocumentReference userRef = mDb.collection(getString(R.string.collection_users))
+                    .document(FirebaseAuth.getInstance().getUid());
+
+            userRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                @Override
+                public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                    if(task.isSuccessful()){
+                        Log.d(TAG, "onComplete: successfully set the user client.");
+                           User user = task.getResult().toObject(User.class);
+                            mUser = task.getResult().toObject(User.class);
+                        Log.d(TAG, "HEJHEJ" + task.getResult().toString());
+                        Log.d(TAG, "HEJHEJ " + " GEOPOINT " + /*+ task.getResult().getData().containsValue("edvinheterjag@edvin.se")  + */" " + task.getResult().getGeoPoint("geo_point") + task.getResult().getDate("timestamp"));
+
+
+                        getLastKnownLocation();
+                    }
+                }
+            });
+        }
+        else{
             getLastKnownLocation();
+        }
     }
 
     private void getLastKnownLocation() {
