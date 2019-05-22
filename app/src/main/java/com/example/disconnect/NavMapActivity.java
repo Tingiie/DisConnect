@@ -51,6 +51,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private ArrayList<User> userList;
     private String status;
     private Circle myCircle;
+    private User potentialMatch;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -118,17 +119,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             shareLocation = true;
             setCircle();
             centerMap(currentLatLng);
-            mMap.setOnCircleClickListener(new GoogleMap.OnCircleClickListener() {
-                @Override
-                public void onCircleClick(Circle circle) {
-                    if (circle.equals(myCircle)) {
-                        Toast.makeText(NavMapActivity.this, "Status: " + status, Toast.LENGTH_SHORT).show();
-                        awaitingHandshake();
-                    } else {
-                        Toast.makeText(NavMapActivity.this, "A toast", Toast.LENGTH_SHORT).show();
-                    }
-                }
-            });
+
         } else {
             offline();
             Toast.makeText(this, "Please turn on Location", Toast.LENGTH_LONG).show();
@@ -168,9 +159,9 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private void setMapSettings() {
         mMap.getUiSettings().setAllGesturesEnabled(false);
         mMap.getUiSettings().setMyLocationButtonEnabled(false);
-        mMap.getUiSettings().setRotateGesturesEnabled(true);
-        mMap.getUiSettings().setTiltGesturesEnabled(true);
-        mMap.getUiSettings().setCompassEnabled(true);
+//        mMap.getUiSettings().setRotateGesturesEnabled(true);
+//        mMap.getUiSettings().setTiltGesturesEnabled(true);
+//        mMap.getUiSettings().setCompassEnabled(true);
     }
 
     private void resetMap() {
@@ -240,6 +231,51 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
     }
 
+    public void centerMap(LatLng center) {
+        moveCamera(center, DEFAULT_ZOOM);
+        moveCircle(center);
+    }
+
+    private void offline() {
+        status = "Offline";
+        setTitle(status);
+    }
+
+    private void online() {
+        status = "Online";
+        setTitle(status);
+    }
+
+    private void nearbyUsers(int count) {
+        status = "Nearby users: " + count;
+        setTitle(status);
+    }
+
+    private void awaitingHandshake() {
+        status = "Awaiting handshake";
+        setTitle(status);
+    }
+
+    private void setPotentialMatch(User user) {
+        potentialMatch = user;
+    }
+
+
+//    private void createNearbyMarker(){
+//        Location l2 = new Location(currentLocation);
+//        LatLng ll2 = new LatLng(55.710365, 13.208238);
+//
+//        l2.setLatitude(ll2.latitude);
+//        l2.setLongitude(ll2.longitude);
+//        BitmapDescriptor pinkMarker = BitmapDescriptorFactory.fromResource(R.drawable.pngrosa2);
+//
+//        MarkerOptions nearbyOpt = new MarkerOptions()
+//            .position(ll2)
+//            .icon(pinkMarker);
+//
+//        mMap.addMarker(nearbyOpt);
+//    }
+
     public void createDistantMarker() {
         Location l1 = new Location(currentLocation);
         LatLng ll1 = new LatLng(55.714911, 13.215717);
@@ -258,59 +294,26 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
     public void createNearbyMarker() {
         Location l1 = new Location(currentLocation);
-        LatLng ll1 = new LatLng(55.714596, 13.212890);
+        LatLng ll1 = new LatLng(55.710365, 13.208238);
 
         l1.setLatitude(ll1.latitude);
         l1.setLongitude(ll1.longitude);
 
-
-        CircleOptions distantOpt = new CircleOptions()
+        CircleOptions nearbyOpt = new CircleOptions()
                 .center(ll1)
                 .clickable(false)
-                .radius(20)
+                .radius(6)
                 .strokeColor(Color.WHITE)
                 .fillColor(Color.MAGENTA)
                 .zIndex(2);
-        myCircle = mMap.addCircle(distantOpt);
+        myCircle = mMap.addCircle(nearbyOpt);
+        myCircle.setClickable(true);
+        mMap.setOnCircleClickListener(new GoogleMap.OnCircleClickListener() {
+            @Override
+            public void onCircleClick(Circle circle) {
+                //setPotentialMatch();
+                awaitingHandshake();
+            }
+        });
     }
-
-    private void offline() {
-        status = "Offline";
-    }
-
-    private void online() {
-        status = "Online";
-    }
-
-    private void nearbyUsers(int count) {
-        status = "Nearby users: " + count;
-    }
-
-    private void awaitingHandshake() {
-        status = "Awaiting handshake";
-    }
-
-    public Location getCurrentLocation() {
-        return currentLocation;
-    }
-
-    public void centerMap(LatLng center) {
-        moveCamera(center, DEFAULT_ZOOM);
-        moveCircle(center);
-    }
-
-//    private void createNearbyMarker(){
-//        Location l2 = new Location(currentLocation);
-//        LatLng ll2 = new LatLng(55.710365, 13.208238);
-//
-//        l2.setLatitude(ll2.latitude);
-//        l2.setLongitude(ll2.longitude);
-//        BitmapDescriptor pinkMarker = BitmapDescriptorFactory.fromResource(R.drawable.pngrosa2);
-//
-//        MarkerOptions nearbyOpt = new MarkerOptions()
-//            .position(ll2)
-//            .icon(pinkMarker);
-//
-//        mMap.addMarker(nearbyOpt);
-//    }
 }
