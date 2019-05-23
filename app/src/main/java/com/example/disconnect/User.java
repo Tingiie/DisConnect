@@ -193,4 +193,6 @@ public class User implements Parcelable{
     public void incConnectionCounter() {
         this.connectionCounter++;
     }
+
+    
 }
