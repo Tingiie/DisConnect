@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.nfc.Tag;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -64,15 +65,17 @@ public class MainActivity extends AppCompatActivity {
                 startMapActivity(view);
             }
         });
-        getAllUsers();
-        getUserDetails();
-        //User user = getUserInformation();
-      //  Log.d(TAG, "User: " + user.getEmail());
+
+        getUser();
+        String s = mUser.getEmail();
+        Log.d(TAG, "Frodo" + s);
+
 
 
     }
 
     private void getUserDetails(){
+
         if(mUser == null){
             mUser = new User();
             DocumentReference userRef = mDb.collection(getString(R.string.collection_users))
@@ -118,30 +121,26 @@ public class MainActivity extends AppCompatActivity {
                         Log.d(TAG, "HEJHEJ" + task.getResult().toString());
                         Log.d(TAG, "HEJHEJ " + " GEOPOINT " + /*+ task.getResult().getData().containsValue("edvinheterjag@edvin.se")  + */" LATIDUDE: " + task.getResult().getGeoPoint("geo_point").getLatitude() + " DATE: " + task.getResult().getDate("timestamp"));
 
-
-                        getLastKnownLocation();
+                        saveUserLocation();
+                        //getLastKnownLocation();
                     }
+
                 }
             });
         }
         else{
-            getLastKnownLocation();
+            saveUserLocation();
+            //  getLastKnownLocation();
         }
     }
 
 
     private void getAllUsers(){
         allUsersList = new ArrayList<>();
-
-
         CollectionReference usersRef = mDb
                 .collection(getString(R.string.collection_users));
 
-
-
         usersRef.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-
-
             @Override
             public void onComplete(@NonNull Task<QuerySnapshot> task) {
                 if (task.isSuccessful()) {
@@ -184,8 +183,8 @@ public class MainActivity extends AppCompatActivity {
 
                                     User user = new User(active, conncount, email, handshakeTime, handshakeDetected, potentialMatch, user_id, username, geoPoint, timestamp);
                                     allUsersList.add(user);
-                                    Log.d(TAG, "Rövballe" + allUsersList.toString());
-
+//                                    Log.d(TAG, "Rövballe" + allUsersList.toString());
+//                                    Log.d(TAG, "Hästkuk: " + mUser.getLocation());
                                 //    mUser = task.getResult().toObject(User.class);
   //                                  Log.d(TAG, "HEJHEJ" + task.getResult().toString());
 //                                    Log.d(TAG, "HEJHEJ " + " GEOPOINT " + /*+ task.getResult().getData().containsValue("edvinheterjag@edvin.se")  + */" LATIDUDE: " + task.getResult().getGeoPoint("geo_point").getLatitude() + " DATE: " + task.getResult().getDate("timestamp"));
@@ -205,10 +204,72 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    private void updateUser(){
-        
-    }
+    private void updateUser() {
+        DocumentReference locationRef = mDb
+                .collection(getString(R.string.collection_users))
+                .document(FirebaseAuth.getInstance().getUid());
 
+        locationRef.set(mUser).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if(task.isSuccessful()){
+                    Log.d(TAG, "saveUserLocation: \ninserted user location into database." +
+                            "\n latitude: " + mUser.getGeo_point().getLatitude() +
+                            "\n longitude: " + mUser.getGeo_point().getLongitude());
+                }
+            }
+        });
+
+
+
+
+        }
+
+        public void getUser() {
+            if (mUser == null) {
+                mUser = new User();
+
+                DocumentReference userRef = mDb.collection(getString(R.string.collection_users))
+                        .document(FirebaseAuth.getInstance().getUid());
+
+                Log.d(TAG, "1. USERUSER: ");
+                userRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+
+                        if (task.isSuccessful()) {
+                            Log.d(TAG, "2. gandalf" +task.getResult().toString());
+                            Boolean active = task.getResult().getBoolean("active");
+                            Log.d(TAG, "3. getUser: active: " + active);
+                            //Boolean active = true;
+                            //Sätts till 0 pga null i Firebase. Ska senare använda:
+                            int conncount = Math.toIntExact((long) task.getResult().get("connectionCounter"));
+                            // int conncount = 0;
+                            Log.d(TAG, "4. getUser: count: " + conncount);
+                            String email = task.getResult().getString("email");
+                            Log.d(TAG, "5. getUser: email: " + email);
+
+                            Date handshakeTime = task.getResult().getDate("handShakeTime");
+                            //Log.d(TAG, "getUser: date: " + handshakeTime.toString());  is null
+                            Boolean handshakeDetected = task.getResult().getBoolean("handshakeDetected");
+                            Log.d(TAG, "6. getUser: handshakeDetected: " + handshakeDetected);
+                            User potentialMatch = (User) task.getResult().get("potentialMatch");
+                            //Log.d(TAG, "getUser: potentialMatch: " + potentialMatch.getUsername()); is null
+                            String user_id = task.getResult().getString("user_id");
+                            Log.d(TAG, "7. getUser: user_id: " + user_id);
+                            String username = task.getResult().getString("username");
+                            Log.d(TAG, "8. getUser: username: " + username);
+                            GeoPoint geoPoint = task.getResult().getGeoPoint("geo_point");
+                            Log.d(TAG, "9. getUser: geoPoint: " + geoPoint);
+                            Date timestamp = task.getResult().getDate("timestamp");
+                            Log.d(TAG, "10. getUser: timestamp: " + timestamp);
+                            mUser = new User(active, conncount, email, handshakeTime, handshakeDetected, potentialMatch, user_id, username, geoPoint, timestamp);
+                            Log.d(TAG, "11. gimli" + mUser.getUser_id() + mUser.getEmail());
+                        }
+                    }
+                });
+            }
+        }
 
     private void getLastKnownLocation() {
         Log.d(TAG, "getLastKnownLocation: called.");
@@ -268,7 +329,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         Task<DocumentSnapshot> hej = drf.get();
-        getLastKnownLocation();
+     //   getLastKnownLocation();
         drf.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
