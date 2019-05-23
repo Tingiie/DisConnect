@@ -4,21 +4,20 @@ import android.location.Location;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import java.util.Date;
 
 public class User implements Parcelable{
-
     private String email;
     private String user_id;
     private String username;
     private boolean active;
-    private Location location;
+    private LatLng location;
     private boolean handshakeDetected;
     private Date handShakeTime;
     private User potentialMatch;
     private int connectionCounter;
-
-
 
     //  private String avatar;
 
@@ -128,11 +127,11 @@ public class User implements Parcelable{
         this.handshakeDetected = handshakeDetected;
     }
 
-    public Location getLocation() {
+    public LatLng getLocation() {
         return location;
     }
 
-    public void setLocation(Location location) {
+    public void setLocation(LatLng location) {
         this.location = location;
     }
 
