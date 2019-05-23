@@ -3,11 +3,13 @@ package com.example.disconnect;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -22,13 +24,9 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.ArrayList;
 
@@ -48,7 +46,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private Location currentLocation;
     private boolean mLocationPermissionGranted = false;
     private Circle mapCircle;
-    private ArrayList<User> userList;
+    private ArrayList<User> nearbyUsers;
     private String status;
     private Circle myCircle;
     private User potentialMatch;
@@ -119,6 +117,11 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             shareLocation = true;
             setCircle();
             centerMap(currentLatLng);
+            try {
+                mockUsers();
+            } catch (Exception e) {
+                Log.d(TAG, "onMapReady: mockUsers, Permission needed?");
+            }
 
         } else {
             offline();
@@ -137,8 +140,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                         0, locationListener);
                 currentLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                 currentLatLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
-                createNearbyMarker();       //TODO: Remove later
-                createDistantMarker();      //TODO: Remove later
+                createNearbyUser();       //TODO: Remove later
+                createDistantUser();      //TODO: Remove later
             } else {
                 offline();
                 Log.d(TAG, "updateDeviceLocation: current location is null");
@@ -151,7 +154,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
     }
 
-    public void moveCamera(LatLng latlng, float zoom){
+    public void moveCamera(LatLng latlng, float zoom) {
         Log.d(TAG, "moveCamera: moving the camera to Latitude: " + latlng.latitude + ", longitude: " + latlng.longitude);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latlng, zoom));
     }
@@ -176,8 +179,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         mapCircle = mMap.addCircle(new CircleOptions()
                 .center(currentLatLng)
                 .radius(100)
-                .strokeColor(Color.argb(150,00,100, 210))
-                .fillColor(Color.argb(50,00,100, 210)));
+                .strokeColor(Color.argb(150, 00, 100, 210))
+                .fillColor(Color.argb(50, 00, 100, 210)));
     }
 
     public void moveCircle(LatLng latLng) {
@@ -186,9 +189,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
     }
 
-
     private boolean hasPermissionAndLocation() {
-            return (mLocationPermissionGranted && locationManager.isLocationEnabled());
+        return (mLocationPermissionGranted && locationManager.isLocationEnabled());
     }
 
     private boolean enableMapLocation(boolean status) {
@@ -216,8 +218,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         Log.d(TAG, "onRequestPermissionsResult: called");
         mLocationPermissionGranted = false;
 
-        switch(requestCode) {
-            case  LOCATION_REQ_CODE :{
+        switch (requestCode) {
+            case LOCATION_REQ_CODE: {
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     mLocationPermissionGranted = true;
                     Log.d(TAG, "onRequestPermissionsResult: permission granted");
@@ -260,23 +262,114 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         potentialMatch = user;
     }
 
+    public void updateNearbyUsers(ArrayList<User> allUsers) {
+        Toast.makeText(NavMapActivity.this, "Update nearby users", Toast.LENGTH_SHORT).show();
 
-//    private void createNearbyMarker(){
-//        Location l2 = new Location(currentLocation);
-//        LatLng ll2 = new LatLng(55.710365, 13.208238);
-//
-//        l2.setLatitude(ll2.latitude);
-//        l2.setLongitude(ll2.longitude);
-//        BitmapDescriptor pinkMarker = BitmapDescriptorFactory.fromResource(R.drawable.pngrosa2);
-//
-//        MarkerOptions nearbyOpt = new MarkerOptions()
-//            .position(ll2)
-//            .icon(pinkMarker);
-//
-//        mMap.addMarker(nearbyOpt);
-//    }
+        if (allUsers.isEmpty()) {
+            Toast.makeText(NavMapActivity.this, "The list is empty", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-    public void createDistantMarker() {
+        boolean oldListEmpty;
+        if (nearbyUsers.isEmpty()) {
+            oldListEmpty = true;
+            Toast.makeText(NavMapActivity.this, "Old list is empty", Toast.LENGTH_SHORT).show();
+        } else {
+            oldListEmpty = false;
+            Toast.makeText(NavMapActivity.this, "Old list is not empty", Toast.LENGTH_SHORT).show();
+        }
+
+        nearbyUsers = new ArrayList<>();
+        for (User user : allUsers) {
+            Location otherLocation = user.getLocation();
+            float distance = currentLocation.distanceTo(otherLocation);
+            if (user.getActive() && distance < 100) {
+                if (distance <= 10) {
+                    nearbyUsers.add(user);
+                    createNearbyUser(user);
+                } else {
+                    createDistantUser(user);
+                }
+            }
+        }
+
+        nearbyUsers(nearbyUsers.size());
+
+        if (oldListEmpty && !nearbyUsers.isEmpty()) {
+            Toast.makeText(NavMapActivity.this, "A user is nearby!", Toast.LENGTH_LONG).show();
+
+            //Todo: vibrate
+            try {
+                Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+// Vibrate for 500 milliseconds
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    v.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE));
+                } else {
+                    //deprecated in API 26
+                    v.vibrate(500);
+                }
+            } catch (Exception e) {
+                Log.d(TAG, "updateNearbyUsers: error message " + e.getMessage());
+            }
+        } else {
+            Toast.makeText(NavMapActivity.this, "No user is nearby", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    public void createNearbyUser(User user) {
+        CircleOptions nearbyOpt = new CircleOptions()
+                .center(new LatLng(user.getLocation().getLatitude(), user.getLocation().getLongitude()))
+                .clickable(true)
+                .radius(6)
+                .strokeColor(Color.WHITE)
+                .fillColor(Color.MAGENTA)
+                .zIndex(2);
+        myCircle = mMap.addCircle(nearbyOpt);
+        mMap.setOnCircleClickListener(new GoogleMap.OnCircleClickListener() {
+            @Override
+            public void onCircleClick(Circle circle) {
+                //setPotentialMatch();
+                awaitingHandshake();
+            }
+        });
+    }
+
+    public void createDistantUser(User user) {
+        CircleOptions distantOpt = new CircleOptions()
+                .center(new LatLng(user.getLocation().getLatitude(), user.getLocation().getLongitude()))
+                .clickable(false)
+                .radius(6)
+                .strokeColor(Color.WHITE)
+                .fillColor(Color.GRAY)
+                .zIndex(2);
+        myCircle = mMap.addCircle(distantOpt);
+        myCircle.setClickable(false);
+    }
+
+    private void mockUsers() {
+        ArrayList<User> users = new ArrayList<>();
+
+        User user1 = new User();
+        User user2 = new User();
+
+        Location l1 = currentLocation;
+        l1.setLatitude(55.710365);
+        l1.setLongitude(13.208238);
+        user1.setLocation(l1);
+
+        Location l2 = currentLocation;
+        l2.setLatitude(55.711249);
+        l2.setLongitude(13.207968);
+        user2.setLocation(l2);
+
+        users.add(user1);
+        users.add(user2);
+
+        updateNearbyUsers(users);
+
+    }
+
+    public void createDistantUser() {
         Location l1 = new Location(currentLocation);
         LatLng ll1 = new LatLng(55.714911, 13.215717);
 
@@ -292,7 +385,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         mMap.addCircle(distantOpt);
     }
 
-    public void createNearbyMarker() {
+    public void createNearbyUser() {
         Location l1 = new Location(currentLocation);
         LatLng ll1 = new LatLng(55.710365, 13.208238);
 
