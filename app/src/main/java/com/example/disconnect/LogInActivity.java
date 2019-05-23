@@ -28,9 +28,13 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreSettings;
+import com.google.firebase.firestore.GeoPoint;
+import com.google.firebase.firestore.IgnoreExtraProperties;
+
+import java.util.Date;
 
 import static android.text.TextUtils.isEmpty;
-
+@IgnoreExtraProperties
 public class LogInActivity extends AppCompatActivity implements View.OnClickListener {
 
 
@@ -108,8 +112,29 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
                         public void onComplete(@NonNull Task<DocumentSnapshot> task) {
                             if(task.isSuccessful()){
                                 Log.d(TAG, "onComplete: successfully set the user client.");
-                                User user = task.getResult().toObject(User.class);
-                                ((UserClient)(getApplicationContext())).setUser(user);
+                                Boolean active = task.getResult().getBoolean("active");
+                                //Boolean active = true;
+                                //Sätts till 0 pga null i Firebase. Ska senare använda:
+                                int conncount = Math.toIntExact((long) task.getResult().get("connectionCounter"));
+                                // int conncount = 0;
+                                String email = task.getResult().getString("email");
+                                Date handshakeTime = task.getResult().getDate("handShakeTime");
+
+
+                                Boolean handshakeDetected = task.getResult().getBoolean("handshakeDetected");
+
+                                User potentialMatch = (User) task.getResult().get("potentialMatch");
+
+                                String user_id = task.getResult().getString("user_id");
+                                String username = task.getResult().getString("username");
+                                GeoPoint geoPoint = task.getResult().getGeoPoint("geo_point");
+                                Date timestamp = task.getResult().getDate("timestamp");
+
+
+                                User user = new User(active, conncount, email, handshakeTime, handshakeDetected, potentialMatch, user_id, username, geoPoint, timestamp);
+
+
+                                ((UserClient) (getApplicationContext())).setUser(user);
                             }
                         }
                     });
@@ -128,8 +153,6 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
             }
         };
     }
-
-
 
 
     @Override

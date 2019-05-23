@@ -21,10 +21,11 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreSettings;
+import com.google.firebase.firestore.IgnoreExtraProperties;
 
 import static android.text.TextUtils.isEmpty;
 import static com.example.disconnect.Check.doStringsMatch;
-
+@IgnoreExtraProperties
 public class SignUpActivity extends AppCompatActivity implements View.OnClickListener{
 
     private static final String TAG = "SignUpActivity";
