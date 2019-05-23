@@ -5,18 +5,20 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.firestore.GeoPoint;
+import com.google.firebase.firestore.IgnoreExtraProperties;
 import com.google.firebase.firestore.ServerTimestamp;
 
 import java.util.Date;
-
+@IgnoreExtraProperties
 public class User implements Parcelable{
 
     private String email;
     private String user_id;
     private String username;
     private boolean active;
-    private Location location;
+ //   private Location location;
     private boolean handshakeDetected;
     private Date handShakeTime;
     private User potentialMatch;
@@ -26,6 +28,9 @@ public class User implements Parcelable{
     Date timestamp;
 
 
+    public User() {
+
+    }
 
     //  private String avatar;
 
@@ -42,9 +47,7 @@ public class User implements Parcelable{
         this.timestamp = timestamp;
     }
 
-    public User() {
 
-    }
 
     protected User(Parcel in) {
         email = in.readString();
@@ -162,14 +165,12 @@ public class User implements Parcelable{
         this.timestamp = timestamp;
     }
 
-    public Location getLocation() {
-        return location;
+    public void setLocation(LatLng latLng){
+        this.geo_point = new GeoPoint(latLng.latitude, latLng.longitude);
     }
-
-    public void setLocation(Location location) {
-        this.location = location;
+    public LatLng getLocation(){
+        return new LatLng(this.geo_point.getLatitude(), this.getGeo_point().getLongitude());
     }
-
     public Date getHandShakeTime() {
         return handShakeTime;
     }
@@ -194,5 +195,5 @@ public class User implements Parcelable{
         this.connectionCounter++;
     }
 
-    
+
 }
