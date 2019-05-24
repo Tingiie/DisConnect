@@ -1,6 +1,7 @@
 package com.example.disconnect;
 
 import android.app.Application;
+
 import com.example.disconnect.User;
 
 public class UserClient extends Application {

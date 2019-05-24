@@ -21,11 +21,13 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreSettings;
+import com.google.firebase.firestore.IgnoreExtraProperties;
 
 import static android.text.TextUtils.isEmpty;
 import static com.example.disconnect.Check.doStringsMatch;
 
-public class SignUpActivity extends AppCompatActivity implements View.OnClickListener{
+@IgnoreExtraProperties
+public class SignUpActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String TAG = "SignUpActivity";
 
@@ -41,7 +43,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
 
 
     @Override
-    protected void onCreate(@Nullable  Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_up);
 
@@ -64,7 +66,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
 
     }
 
-    private void registerUser(final String email, String password){
+    private void registerUser(final String email, String password) {
         showDialog();
 
         FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
@@ -73,7 +75,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         Log.d(TAG, "createUserWithEmail:onComplete:" + task.isSuccessful());
 
-                        if (task.isSuccessful()){
+                        if (task.isSuccessful()) {
                             Log.d(TAG, "onComplete: AuthState: " + FirebaseAuth.getInstance().getCurrentUser().getUid());
 
                             //insert some default data
@@ -82,6 +84,10 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
                             user.setEmail(email);
                             user.setUsername(email.substring(0, email.indexOf("@")));
                             user.setUser_id(FirebaseAuth.getInstance().getUid());
+                            user.setHandshakeDetected(false);
+                            user.setHandShakeTime(null);
+                            user.setPotentialMatch(null);
+
 
                             FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
                                     .setTimestampsInSnapshotsEnabled(true)
@@ -97,17 +103,16 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
                                 public void onComplete(@NonNull Task<Void> task) {
                                     hideDialog();
 
-                                    if(task.isSuccessful()){
+                                    if (task.isSuccessful()) {
                                         redirectLoginScreen();
-                                    }else{
+                                    } else {
                                         View parentLayout = findViewById(android.R.id.content);
                                         Snackbar.make(parentLayout, "Something went wrong.", Snackbar.LENGTH_SHORT).show();
                                     }
                                 }
                             });
 
-                        }
-                        else {
+                        } else {
                             View parentLayout = findViewById(android.R.id.content);
                             Snackbar.make(parentLayout, "Password requires at least 6 characters.", Snackbar.LENGTH_SHORT).show();
                             hideDialog();
@@ -117,10 +122,11 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
                     }
                 });
     }
+
     /**
      * Redirects the user to the login screen
      */
-    private void redirectLoginScreen(){
+    private void redirectLoginScreen() {
         Log.d(TAG, "redirectLoginScreen: redirecting to login screen.");
 
         Intent intent = new Intent(SignUpActivity.this, LogInActivity.class);
@@ -129,42 +135,42 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
     }
 
 
-    private void showDialog(){
+    private void showDialog() {
         progressBar.setVisibility(View.VISIBLE);
 
     }
 
-    private void hideDialog(){
-        if(progressBar.getVisibility() == View.VISIBLE){
+    private void hideDialog() {
+        if (progressBar.getVisibility() == View.VISIBLE) {
             progressBar.setVisibility(View.INVISIBLE);
         }
     }
 
-    private void hideSoftKeyboard(){
+    private void hideSoftKeyboard() {
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
     }
 
     @Override
     public void onClick(View view) {
-        switch (view.getId()){
-            case R.id.btn_register:{
+        switch (view.getId()) {
+            case R.id.btn_register: {
                 Log.d(TAG, "onClick: attempting to register.");
 
                 //check for null valued EditText fields
-                if(!isEmpty(editTextEmail.getText().toString())
+                if (!isEmpty(editTextEmail.getText().toString())
                         && !isEmpty(editTextPassword.getText().toString())
-                        && !isEmpty(editConfirmPassword.getText().toString())){
+                        && !isEmpty(editConfirmPassword.getText().toString())) {
 
                     //check if passwords match
-                    if(doStringsMatch(editTextPassword.getText().toString(), editConfirmPassword.getText().toString())){
+                    if (doStringsMatch(editTextPassword.getText().toString(), editConfirmPassword.getText().toString())) {
 
                         //Initiate registration task
                         registerUser(editTextEmail.getText().toString(), editTextPassword.getText().toString());
-                    }else{
+                    } else {
                         Toast.makeText(SignUpActivity.this, "Passwords do not Match", Toast.LENGTH_SHORT).show();
                     }
 
-                }else{
+                } else {
                     Toast.makeText(SignUpActivity.this, "You must fill out all the fields", Toast.LENGTH_SHORT).show();
                 }
                 break;

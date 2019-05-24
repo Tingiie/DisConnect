@@ -28,9 +28,14 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreSettings;
+import com.google.firebase.firestore.GeoPoint;
+import com.google.firebase.firestore.IgnoreExtraProperties;
+
+import java.util.Date;
 
 import static android.text.TextUtils.isEmpty;
 
+@IgnoreExtraProperties
 public class LogInActivity extends AppCompatActivity implements View.OnClickListener {
 
 
@@ -44,6 +49,7 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
     EditText mEmail, mPassword;
     ProgressBar mProgressBar;
     FirebaseAuth mAuth;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,25 +71,25 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
         hideSoftKeyboard();
     }
 
-    private void showDialog(){
+    private void showDialog() {
         mProgressBar.setVisibility(View.VISIBLE);
 
     }
 
-    private void hideDialog(){
-        if(mProgressBar.getVisibility() == View.VISIBLE){
+    private void hideDialog() {
+        if (mProgressBar.getVisibility() == View.VISIBLE) {
             mProgressBar.setVisibility(View.INVISIBLE);
         }
     }
 
-    private void hideSoftKeyboard(){
+    private void hideSoftKeyboard() {
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
     }
 
     /*
            ----------------------------- Firebase setup ---------------------------------
         */
-    private void setupFirebaseAuth(){
+    private void setupFirebaseAuth() {
         Log.d(TAG, "setupFirebaseAuth: started.");
 
         mAuthListener = new FirebaseAuth.AuthStateListener() {
@@ -106,14 +112,35 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
                     userRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                         @Override
                         public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                            if(task.isSuccessful()){
+                            if (task.isSuccessful()) {
                                 Log.d(TAG, "onComplete: successfully set the user client.");
-                                User user = task.getResult().toObject(User.class);
-                                ((UserClient)(getApplicationContext())).setUser(user);
+                                Boolean active = task.getResult().getBoolean("active");
+                                //Boolean active = true;
+                                //Sätts till 0 pga null i Firebase. Ska senare använda:
+                                int conncount = Math.toIntExact((long) task.getResult().get("connectionCounter"));
+                                // int conncount = 0;
+                                String email = task.getResult().getString("email");
+                                Date handshakeTime = task.getResult().getDate("handShakeTime");
+
+
+                                Boolean handshakeDetected = task.getResult().getBoolean("handshakeDetected");
+
+                                User potentialMatch = (User) task.getResult().get("potentialMatch");
+
+                                String user_id = task.getResult().getString("user_id");
+                                String username = task.getResult().getString("username");
+                                GeoPoint geoPoint = task.getResult().getGeoPoint("geo_point");
+                                Date timestamp = task.getResult().getDate("timestamp");
+
+
+                                User user = new User(active, conncount, email, handshakeTime, handshakeDetected, potentialMatch, user_id, username, geoPoint, timestamp);
+
+
+                                ((UserClient) (getApplicationContext())).setUser(user);
                             }
                         }
                     });
-                    // Här blir det knas om jag ändrar mainactivity till navmapactiviity
+
                     Intent intent = new Intent(LogInActivity.this, MainActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
@@ -128,8 +155,6 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
             }
         };
     }
-
-
 
 
     @Override
@@ -147,12 +172,10 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
     }
 
 
-
-
-    private void signIn(){
+    private void signIn() {
         //check if the fields are filled out
-        if(!isEmpty(mEmail.getText().toString())
-                && !isEmpty(mPassword.getText().toString())){
+        if (!isEmpty(mEmail.getText().toString())
+                && !isEmpty(mPassword.getText().toString())) {
             Log.d(TAG, "onClick: attempting to authenticate.");
 
             showDialog();
@@ -169,25 +192,25 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
                     }).addOnFailureListener(new OnFailureListener() {
                 @Override
                 public void onFailure(@NonNull Exception e) {
-                    Toast.makeText(LogInActivity.this, "Incorrect Email or Password", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LogInActivity.this, "Authentication Failed", Toast.LENGTH_SHORT).show();
                     hideDialog();
                 }
             });
-        }else{
+        } else {
             Toast.makeText(LogInActivity.this, "You didn't fill in all the fields.", Toast.LENGTH_SHORT).show();
         }
     }
 
     @Override
     public void onClick(View view) {
-        switch (view.getId()){
-            case R.id.link_register:{
+        switch (view.getId()) {
+            case R.id.link_register: {
                 Intent intent = new Intent(LogInActivity.this, SignUpActivity.class);
                 startActivity(intent);
                 break;
             }
 
-            case R.id.email_sign_in_button:{
+            case R.id.email_sign_in_button: {
                 signIn();
                 break;
             }

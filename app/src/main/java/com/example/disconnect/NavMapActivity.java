@@ -53,7 +53,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         setContentView(R.layout.activity_nav_map);
 
         locationListener = new MyLocationListener(this, DEFAULT_ZOOM);
-        locationManager=(LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
         FloatingActionButton gpsButton = findViewById(R.id.gps_button);
         gpsButton.setOnClickListener(new View.OnClickListener() {
@@ -96,13 +96,13 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     //Menyraden
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch(item.getItemId()){
-            case R.id.action_sign_out:{
+        switch (item.getItemId()) {
+            case R.id.action_sign_out: {
                 signOut();
                 return true;
             }
 
-            default:{
+            default: {
                 return super.onOptionsItemSelected(item);
             }
         }
@@ -118,7 +118,9 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
     }
 
-    private void signOut(){
+    private void signOut() {
+        //mUser.setActive(false);
+        // updateUser();
         FirebaseAuth.getInstance().signOut();
         Intent intent = new Intent(this, LogInActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -166,12 +168,12 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 Toast.makeText(NavMapActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
             }
         } catch (SecurityException e) {
-        Log.d(TAG, "updateDeviceLocation: SecurityException: " + e.getMessage());
-        Toast.makeText(NavMapActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
+            Log.d(TAG, "updateDeviceLocation: SecurityException: " + e.getMessage());
+            Toast.makeText(NavMapActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
         }
     }
 
-    public void moveCamera(LatLng latlng, float zoom){
+    public void moveCamera(LatLng latlng, float zoom) {
         Log.d(TAG, "moveCamera: moving the camera to Latitude: " + latlng.latitude + ", longitude: " + latlng.longitude);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latlng, zoom));
     }
@@ -193,8 +195,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         mapCircle = mMap.addCircle(new CircleOptions()
                 .center(currentLatLng)
                 .radius(300)
-                .strokeColor(Color.argb(150,00,100, 210))
-                .fillColor(Color.argb(50,00,100, 210)));
+                .strokeColor(Color.argb(150, 00, 100, 210))
+                .fillColor(Color.argb(50, 00, 100, 210)));
     }
 
     public void moveCircle(LatLng latLng) {
@@ -205,7 +207,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
 
     private boolean hasPermissionAndLocation() {
-            return (mLocationPermissionGranted && locationManager.isLocationEnabled());
+        return (mLocationPermissionGranted && locationManager.isLocationEnabled());
     }
 
     private boolean enableMapLocation(boolean status) {
@@ -233,8 +235,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         Log.d(TAG, "onRequestPermissionsResult: called");
         mLocationPermissionGranted = false;
 
-        switch(requestCode) {
-            case  LOCATION_REQ_CODE :{
+        switch (requestCode) {
+            case LOCATION_REQ_CODE: {
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     mLocationPermissionGranted = true;
                     Log.d(TAG, "onRequestPermissionsResult: permission granted");

@@ -1,34 +1,62 @@
 package com.example.disconnect;
 
+import android.location.Location;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
-public class User implements Parcelable{
+import com.google.android.gms.maps.model.LatLng;
+import com.google.firebase.firestore.GeoPoint;
+import com.google.firebase.firestore.IgnoreExtraProperties;
+import com.google.firebase.firestore.ServerTimestamp;
+
+import java.util.Date;
+
+@IgnoreExtraProperties
+public class User implements Parcelable {
 
     private String email;
     private String user_id;
     private String username;
     private boolean active;
-  //  private String avatar;
+    //   private Location location;
+    private boolean handshakeDetected;
+    private Date handShakeTime;
+    private User potentialMatch;
+    private int connectionCounter;
+    private GeoPoint geo_point = new GeoPoint(1.0, 2.0);
+    private @ServerTimestamp
+    Date timestamp;
 
-    public User(String email, String user_id, String username, boolean active /*, String avatar*/) {
-        this.email = email;
-        this.active = active;
-        this.user_id = user_id;
-        this.username = username;
-        //this.avatar = avatar;
-    }
 
     public User() {
 
     }
+
+    //  private String avatar;
+
+    public User(boolean active, int connectionCounter, String email, Date handShakeTime, boolean handshakeDetected, User potentialMatch, String user_id, String username, GeoPoint geo_point, Date timestamp) {
+        this.user_id = user_id;
+        this.active = active;
+        this.connectionCounter = connectionCounter;
+        this.email = email;
+        this.username = username;
+        this.handshakeDetected = handshakeDetected;
+        this.handShakeTime = handShakeTime;
+        this.potentialMatch = potentialMatch;
+        this.geo_point = geo_point;
+        this.timestamp = timestamp;
+    }
+
 
     protected User(Parcel in) {
         email = in.readString();
         user_id = in.readString();
         username = in.readString();
         active = Boolean.parseBoolean(in.readString());
-       // avatar = in.readString();
+        timestamp = null;
+
+        // avatar = in.readString();
     }
 
     public static final Creator<User> CREATOR = new Creator<User>() {
@@ -42,15 +70,15 @@ public class User implements Parcelable{
             return new User[size];
         }
     };
-/*
-    public String getAvatar() {
-        return avatar;
-    }
 
-    public void setAvatar(String avatar) {
-        this.avatar = avatar;
-    }
-*/
+    /*
+        public String getAvatar() {
+            return avatar;
+        }
+        public void setAvatar(String avatar) {
+            this.avatar = avatar;
+        }
+    */
     public static Creator<User> getCREATOR() {
         return CREATOR;
     }
@@ -63,11 +91,11 @@ public class User implements Parcelable{
         this.email = email;
     }
 
-    public void setActive(boolean active){
+    public void setActive(boolean active) {
         this.active = active;
     }
 
-    public boolean getActive(){
+    public boolean getActive() {
         return active;
     }
 
@@ -93,9 +121,13 @@ public class User implements Parcelable{
                 "email='" + email + '\'' +
                 ", user_id='" + user_id + '\'' +
                 ", username='" + username + '\'' +
+                " UserLocation{" +
+                ", geo_point=" + geo_point +
+                ", timestamp=" + timestamp +
                 '}';
         //", avatar='" + avatar + '\'' +
     }
+
 
     @Override
     public int describeContents() {
@@ -107,7 +139,64 @@ public class User implements Parcelable{
         dest.writeString(email);
         dest.writeString(user_id);
         dest.writeString(username);
-       // dest.writeString(avatar);
+        // dest.writeString(avatar);
     }
-}
 
+    public boolean isHandshakeDetected() {
+        return handshakeDetected;
+    }
+
+    public void setHandshakeDetected(boolean handshakeDetected) {
+        this.handshakeDetected = handshakeDetected;
+    }
+
+    public GeoPoint getGeo_point() {
+        return geo_point;
+    }
+
+    public void setGeo_point(GeoPoint geo_point) {
+        this.geo_point = geo_point;
+    }
+
+    public Date getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(Date timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public void setLocation(LatLng latLng) {
+        this.geo_point = new GeoPoint(latLng.latitude, latLng.longitude);
+    }
+
+    public LatLng getLocation() {
+        return new LatLng(this.geo_point.getLatitude(), this.getGeo_point().getLongitude());
+    }
+
+    public Date getHandShakeTime() {
+        return handShakeTime;
+    }
+
+    public void setHandShakeTime(Date handShakeTime) {
+        this.handShakeTime = handShakeTime;
+    }
+
+    public User getPotentialMatch() {
+        return potentialMatch;
+    }
+
+    public void setPotentialMatch(User potentialMatch) {
+        this.potentialMatch = potentialMatch;
+    }
+
+    public int getConnectionCounter() {
+        return connectionCounter;
+    }
+
+    public void incConnectionCounter() {
+        this.connectionCounter++;
+    }
+
+
+}
