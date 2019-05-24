@@ -13,7 +13,8 @@ public class UserLocation {
 
     private User user;
     private GeoPoint geo_point;
-    private @ServerTimestamp Date timestamp;
+    private @ServerTimestamp
+    Date timestamp;
 
     public UserLocation(User user, GeoPoint geo_point, Date timestamp) {
         this.user = user;

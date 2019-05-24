@@ -11,19 +11,20 @@ import com.google.firebase.firestore.IgnoreExtraProperties;
 import com.google.firebase.firestore.ServerTimestamp;
 
 import java.util.Date;
+
 @IgnoreExtraProperties
-public class User implements Parcelable{
+public class User implements Parcelable {
 
     private String email;
     private String user_id;
     private String username;
     private boolean active;
- //   private Location location;
+    //   private Location location;
     private boolean handshakeDetected;
     private Date handShakeTime;
     private User potentialMatch;
     private int connectionCounter;
-    private GeoPoint geo_point = new GeoPoint(1.0,2.0);
+    private GeoPoint geo_point = new GeoPoint(1.0, 2.0);
     private @ServerTimestamp
     Date timestamp;
 
@@ -34,7 +35,7 @@ public class User implements Parcelable{
 
     //  private String avatar;
 
-    public User( boolean active, int connectionCounter , String email,Date handShakeTime, boolean handshakeDetected,User potentialMatch,  String user_id, String username, GeoPoint geo_point, Date timestamp ) {
+    public User(boolean active, int connectionCounter, String email, Date handShakeTime, boolean handshakeDetected, User potentialMatch, String user_id, String username, GeoPoint geo_point, Date timestamp) {
         this.user_id = user_id;
         this.active = active;
         this.connectionCounter = connectionCounter;
@@ -46,7 +47,6 @@ public class User implements Parcelable{
         this.geo_point = geo_point;
         this.timestamp = timestamp;
     }
-
 
 
     protected User(Parcel in) {
@@ -70,6 +70,7 @@ public class User implements Parcelable{
             return new User[size];
         }
     };
+
     /*
         public String getAvatar() {
             return avatar;
@@ -90,11 +91,11 @@ public class User implements Parcelable{
         this.email = email;
     }
 
-    public void setActive(boolean active){
+    public void setActive(boolean active) {
         this.active = active;
     }
 
-    public boolean getActive(){
+    public boolean getActive() {
         return active;
     }
 
@@ -120,10 +121,10 @@ public class User implements Parcelable{
                 "email='" + email + '\'' +
                 ", user_id='" + user_id + '\'' +
                 ", username='" + username + '\'' +
-               " UserLocation{" +
-                    ", geo_point=" + geo_point +
-                    ", timestamp=" + timestamp +
-                    '}';
+                " UserLocation{" +
+                ", geo_point=" + geo_point +
+                ", timestamp=" + timestamp +
+                '}';
         //", avatar='" + avatar + '\'' +
     }
 
@@ -165,12 +166,14 @@ public class User implements Parcelable{
         this.timestamp = timestamp;
     }
 
-    public void setLocation(LatLng latLng){
+    public void setLocation(LatLng latLng) {
         this.geo_point = new GeoPoint(latLng.latitude, latLng.longitude);
     }
-    public LatLng getLocation(){
+
+    public LatLng getLocation() {
         return new LatLng(this.geo_point.getLatitude(), this.getGeo_point().getLongitude());
     }
+
     public Date getHandShakeTime() {
         return handShakeTime;
     }
