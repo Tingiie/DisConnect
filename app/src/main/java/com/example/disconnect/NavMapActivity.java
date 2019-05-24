@@ -2,6 +2,7 @@ package com.example.disconnect;
 
 import android.Manifest;
 import android.content.Context;
+import android.os.CountDownTimer;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -45,12 +46,15 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private LatLng currentLatLng;
     private boolean mLocationPermissionGranted = false;
     private Circle mapCircle;
+    private MyCountDownTimer myCountDownTimer;
 
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_nav_map);
+        myCountDownTimer = new MyCountDownTimer(10000, 20);
+        myCountDownTimer.start();
 
         locationListener = new MyLocationListener(this, DEFAULT_ZOOM);
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
@@ -247,6 +251,30 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                     return;
                 }
             }
+        }
+    }
+
+    public class MyCountDownTimer extends CountDownTimer {
+
+        public MyCountDownTimer(long millisInFuture, long countDownInterval) {
+            super(millisInFuture, countDownInterval);
+        }
+
+        @Override
+        public void onTick(long millisUntilFinished) {
+
+        }
+
+        @Override
+        public void onFinish() {
+            try{
+                //FATIMA LÄGG IN METODER HÄÄÄÄR HÄÄÄÄR SKA DE LIGGA
+                System.out.println("skrivs ut den var 5e sekund?");
+                start();
+            }catch(Exception e){
+                Log.e("Error", "Error: " + e.toString());
+            }
+
         }
     }
 }
