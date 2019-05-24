@@ -2,14 +2,12 @@ package com.example.disconnect;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.VibrationEffect;
-import android.os.Vibrator;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -17,6 +15,8 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
@@ -27,6 +27,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
 
@@ -59,8 +60,12 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
         locationListener = new MyLocationListener(this, DEFAULT_ZOOM);
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
         nearbyUsers = new ArrayList<>();
         statusOffline();
+
+
+
         FloatingActionButton gpsButton = findViewById(R.id.gps_button);
         gpsButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -104,6 +109,43 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         getLocationPermission();
         initMap();
     }
+
+
+    //Menyraden
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_sign_out: {
+                signOut();
+                return true;
+            }
+
+            default: {
+                return super.onOptionsItemSelected(item);
+            }
+        }
+
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+
+    }
+
+    private void signOut() {
+        //mUser.setActive(false);
+        // updateUser();
+        FirebaseAuth.getInstance().signOut();
+        Intent intent = new Intent(this, LogInActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
+
 
     private void initMap() {
         Log.d(TAG, "initMap: map is initialized");
@@ -150,10 +192,14 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 return false;
             }
         } catch (SecurityException e) {
+
             statusOffline();
             Log.d(TAG, "updateDeviceLocation: SecurityException: " + e.getMessage());
             Toast.makeText(NavMapActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
             return false;
+
+
+
         }
     }
 
@@ -296,7 +342,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             Log.d(TAG, user.getUsername() + "'s location is: " + otherLocation.latitude + " : " + user.getLocation().longitude);
             Log.d(TAG, "The distance to " + user.getUsername()+ " is: " + Double.toString(distance));
 
-            if (user.getActive() && distance < 100) {
+            if (user.isActive() && distance < 100) {
                 if (distance <= 20) {
                     nearbyUsers.add(user);
                     createNearbyUser(user);
@@ -363,6 +409,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     }
 
     private void mockUsers() {
+        /*
         ArrayList<User> users = new ArrayList<>();
 
         User user1 = new User("user1@example.com", "1", "user1", true);
@@ -381,6 +428,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         users.add(user2);
 
         updateNearbyUsers(users);
+        */
     }
 
 //    public void createDistantUser() {
