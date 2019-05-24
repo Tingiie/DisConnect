@@ -313,8 +313,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
         if (oldListEmpty && !nearbyUsers.isEmpty()) {
             Toast.makeText(NavMapActivity.this, "A user is nearby!", Toast.LENGTH_LONG).show();
+            //Todo: vibrate
 
-/*            //Todo: vibrate
             try {
                 Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 // Vibrate for 500 milliseconds
@@ -326,7 +326,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 }
             } catch (Exception e) {
                 Log.d(TAG, "updateNearbyUsers: error message " + e.getMessage());
-            }*/
+            }
         } else if (nearbyUsers.isEmpty()){
             Toast.makeText(NavMapActivity.this, "No user is nearby", Toast.LENGTH_LONG).show();
         }
@@ -382,6 +382,13 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
         updateNearbyUsers(users);
     }
+
+    //TODO: Check handshake
+    // check if potentialMatch isActive
+    // check if potentialMatch's potentialMatch is you
+    // check if handshakeDetected for you
+    // check if handshakeDetected for potentialMatch
+    // check if difference between handshakeTime and potentialMatch's handshakeTime <=3 
 
 //    public void createDistantUser() {
 //        Location l1 = new Location(currentLocation);
