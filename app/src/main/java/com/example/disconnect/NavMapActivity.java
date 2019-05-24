@@ -200,8 +200,11 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         user.setHandShakeTime(Calendar.getInstance().getTime());
         Toast.makeText(NavMapActivity.this, user.getHandShakeTime().toString(), Toast.LENGTH_SHORT).show();
 
-
     }
+
+
+
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
