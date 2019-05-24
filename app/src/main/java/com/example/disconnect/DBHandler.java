@@ -31,19 +31,28 @@ public class DBHandler extends AppCompatActivity {
     private User mUser;
     private ArrayList<User> allUsersList;
     private ArrayList<String> idList;
+    private String userId;
+    private NavMapActivity activity;
 
 
     public void setmDb(FirebaseFirestore mDb) {
         this.mDb = mDb;
     }
 
+    public void setUser(String userId){
+        this.userId = userId;
+    }
+    public void setActivity(NavMapActivity activity){
+        this.activity = activity;
+    }
 
 
-    public User getUser() {
+
+    public void getUser() {
         if (mUser == null) {
             mUser = new User();
 
-            DocumentReference userRef = mDb.collection(getString(R.string.collection_users))
+            DocumentReference userRef = mDb.collection(activity.getString(R.string.collection_users))
                     .document(FirebaseAuth.getInstance().getUid());
 
             Log.d(TAG, "1. USERUSER: ");
@@ -79,17 +88,22 @@ public class DBHandler extends AppCompatActivity {
                         Log.d(TAG, "10. getUser: timestamp: " + timestamp);
                         mUser = new User(active, conncount, email, handshakeTime, handshakeDetected, potentialMatch, user_id, username, geoPoint, timestamp);
                         Log.d(TAG, "11. gimli" + mUser.getUser_id() + mUser.getEmail());
+                        activity.setCurrentUser(mUser);
                     }
                 }
             });
         }
-        return mUser;
+        //return mUser;
     }
 
-    private void updateUser(User user) {
+    public void setmUser(User user) {
+        mUser = user;
+    }
+
+    public void updateUser(User user) {
         mUser = user;
         DocumentReference locationRef = mDb
-                .collection(getString(R.string.collection_users))
+                .collection(activity.getString(R.string.collection_users))
                 .document(FirebaseAuth.getInstance().getUid());
 
         locationRef.set(user).addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -106,10 +120,10 @@ public class DBHandler extends AppCompatActivity {
 
     }
 
-    private ArrayList getAllUsers() {
+    public ArrayList getAllUsers() {
         allUsersList = new ArrayList<>();
         CollectionReference usersRef = mDb
-                .collection(getString(R.string.collection_users));
+                .collection(activity.getString(R.string.collection_users));
 
         usersRef.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
             @Override

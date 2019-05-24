@@ -28,4 +28,5 @@ android:orientation="vertical">
         android:clickable="true"
         android:src="@android:drawable/ic_menu_mylocation" />
 
+
 </RelativeLayout>

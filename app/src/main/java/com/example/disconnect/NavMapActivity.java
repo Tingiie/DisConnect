@@ -63,6 +63,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private User potentialMatch;
     private User nearbyUser;
 
+    private User mUser;
+
     /*
      // Reference to root of FireStore
     private FirebaseFirestore mDb;
@@ -87,20 +89,29 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         setContentView(R.layout.activity_nav_map);
 
         FirebaseFirestore mDb = FirebaseFirestore.getInstance();
+
         DBHandler dbHandler = new DBHandler();
         dbHandler.setmDb(mDb);
-
+        dbHandler.setActivity(this);
+        Log.d(TAG, "Legolas" + "Current user id: " + FirebaseAuth.getInstance().getUid() + "mDb: " + mDb.toString()
+        );
 
         locationListener = new MyLocationListener(this, DEFAULT_ZOOM);
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
         nearbyUsers = new ArrayList<>();
+        dbHandler.getUser();
+        //Log.d(TAG, "ElrondDenStore" + mUser.getUser_id() + mUser.getEmail() + mUser.getTimestamp());
+
         statusOffline();
+
 
         FloatingActionButton gpsButton = findViewById(R.id.gps_button);
         gpsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Log.d(TAG, "Elrond" + mUser.getUser_id() + mUser.getEmail() + mUser.getTimestamp());
+
                 if (!mLocationPermissionGranted) {
                     getLocationPermission();
                     initMap();
@@ -134,6 +145,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                     mMap.clear();
                     enableMapLocation(false);
                 }
+
             }
         });
 
@@ -516,6 +528,10 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             dist = dist * 60 * 1.1515 * 1.609344 * 1000; //m
             return (dist);
         }
+    }
+
+    public void setCurrentUser(User user){
+        this.mUser = user;
     }
 
 
