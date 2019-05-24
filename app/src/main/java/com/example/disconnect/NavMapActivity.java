@@ -2,14 +2,12 @@ package com.example.disconnect;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.VibrationEffect;
-import android.os.Vibrator;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -17,9 +15,12 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -27,8 +28,18 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.GeoPoint;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -52,15 +63,40 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private User potentialMatch;
     private User nearbyUser;
 
+    /*
+     // Reference to root of FireStore
+    private FirebaseFirestore mDb;
+
+    //Used to get location from phone in MainActivity - Probably not needed anymore
+    private FusedLocationProviderClient mFusedLocationClient;
+
+    // User object containing information of user in this session. Based on user_id
+    private User mUser;
+
+    // Contains all users currently in Firebase.
+    private ArrayList<User> allUsersList;
+
+    // Contains all ID:s (i.e. the keys for accessing users in Firebase)
+    private ArrayList<String> idList;
+     */
+
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_nav_map);
 
+        FirebaseFirestore mDb = FirebaseFirestore.getInstance();
+        DBHandler dbHandler = new DBHandler();
+        dbHandler.setmDb(mDb);
+
+
         locationListener = new MyLocationListener(this, DEFAULT_ZOOM);
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
         nearbyUsers = new ArrayList<>();
         statusOffline();
+
         FloatingActionButton gpsButton = findViewById(R.id.gps_button);
         gpsButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -104,6 +140,43 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         getLocationPermission();
         initMap();
     }
+
+
+    //Menyraden
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_sign_out: {
+                signOut();
+                return true;
+            }
+
+            default: {
+                return super.onOptionsItemSelected(item);
+            }
+        }
+
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+
+    }
+
+    private void signOut() {
+        //mUser.setActive(false);
+        // updateUser();
+        FirebaseAuth.getInstance().signOut();
+        Intent intent = new Intent(this, LogInActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
+
 
     private void initMap() {
         Log.d(TAG, "initMap: map is initialized");
@@ -150,10 +223,14 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 return false;
             }
         } catch (SecurityException e) {
+
             statusOffline();
             Log.d(TAG, "updateDeviceLocation: SecurityException: " + e.getMessage());
             Toast.makeText(NavMapActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
             return false;
+
+
+
         }
     }
 
@@ -296,7 +373,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             Log.d(TAG, user.getUsername() + "'s location is: " + otherLocation.latitude + " : " + user.getLocation().longitude);
             Log.d(TAG, "The distance to " + user.getUsername()+ " is: " + Double.toString(distance));
 
-            if (user.getActive() && distance < 100) {
+            if (user.isActive() && distance < 100) {
                 if (distance <= 20) {
                     nearbyUsers.add(user);
                     createNearbyUser(user);
@@ -363,6 +440,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     }
 
     private void mockUsers() {
+        /*
         ArrayList<User> users = new ArrayList<>();
 
         User user1 = new User("user1@example.com", "1", "user1", true);
@@ -381,6 +459,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         users.add(user2);
 
         updateNearbyUsers(users);
+        */
     }
 
     //TODO: Check handshake
@@ -445,5 +524,148 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             return (dist);
         }
     }
+
+
+    // Methods related to Firebase below (moved from MainActivity)
+
+    /*
+     */
+
+
+
+
+//    public void getUser() {
+//        if (mUser == null) {
+//            mUser = new User();
+//
+//            DocumentReference userRef = mDb.collection(getString(R.string.collection_users))
+//                    .document(FirebaseAuth.getInstance().getUid());
+//
+//            Log.d(TAG, "1. USERUSER: ");
+//            userRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+//                @Override
+//                public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+//
+//                    if (task.isSuccessful()) {
+//                        Log.d(TAG, "2. gandalf" + task.getResult().toString());
+//                        Boolean active = task.getResult().getBoolean("active");
+//                        Log.d(TAG, "3. getUser: active: " + active);
+//                        //Boolean active = true;
+//                        //Sätts till 0 pga null i Firebase. Ska senare använda:
+//                        int conncount = Math.toIntExact((long) task.getResult().get("connectionCounter"));
+//                        // int conncount = 0;
+//                        Log.d(TAG, "4. getUser: count: " + conncount);
+//                        String email = task.getResult().getString("email");
+//                        Log.d(TAG, "5. getUser: email: " + email);
+//
+//                        Date handshakeTime = task.getResult().getDate("handShakeTime");
+//                        //Log.d(TAG, "getUser: date: " + handshakeTime.toString());  is null
+//                        Boolean handshakeDetected = task.getResult().getBoolean("handshakeDetected");
+//                        Log.d(TAG, "6. getUser: handshakeDetected: " + handshakeDetected);
+//                        User potentialMatch = (User) task.getResult().get("potentialMatch");
+//                        //Log.d(TAG, "getUser: potentialMatch: " + potentialMatch.getUsername()); is null
+//                        String user_id = task.getResult().getString("user_id");
+//                        Log.d(TAG, "7. getUser: user_id: " + user_id);
+//                        String username = task.getResult().getString("username");
+//                        Log.d(TAG, "8. getUser: username: " + username);
+//                        GeoPoint geoPoint = task.getResult().getGeoPoint("geo_point");
+//                        Log.d(TAG, "9. getUser: geoPoint: " + geoPoint);
+//                        Date timestamp = task.getResult().getDate("timestamp");
+//                        Log.d(TAG, "10. getUser: timestamp: " + timestamp);
+//                        mUser = new User(active, conncount, email, handshakeTime, handshakeDetected, potentialMatch, user_id, username, geoPoint, timestamp);
+//                        Log.d(TAG, "11. gimli" + mUser.getUser_id() + mUser.getEmail());
+//                    }
+//                }
+//            });
+//        }
+//    }
+
+//    private void updateUser() {
+//        DocumentReference locationRef = mDb
+//                .collection(getString(R.string.collection_users))
+//                .document(FirebaseAuth.getInstance().getUid());
+//
+//        locationRef.set(mUser).addOnCompleteListener(new OnCompleteListener<Void>() {
+//            @Override
+//            public void onComplete(@NonNull Task<Void> task) {
+//                if (task.isSuccessful()) {
+//                    Log.d(TAG, "saveUserLocation: \ninserted user location into database." +
+//                            "\n latitude: " + mUser.getGeo_point().getLatitude() +
+//                            "\n longitude: " + mUser.getGeo_point().getLongitude());
+//                }
+//            }
+//        });
+//
+//
+//    }
+    /*
+    Sets allUsersList to ArrayList containing user objects representing all users in Firebase.
+     */
+
+//    private void getAllUsers() {
+//        allUsersList = new ArrayList<>();
+//        CollectionReference usersRef = mDb
+//                .collection(getString(R.string.collection_users));
+//
+//        usersRef.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+//            @Override
+//            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+//                if (task.isSuccessful()) {
+//                    idList = new ArrayList<>();
+//                    ArrayList<DocumentSnapshot> resultList = (ArrayList) task.getResult().getDocuments();
+//
+//                    for (int i = 0; i < resultList.size(); i++) {
+//                        idList.add(resultList.get(i).getId());
+//                    }
+//                    Log.d(TAG, "Idlista" + idList.toString());
+//                    for (String id : idList) {
+//                        DocumentReference userRef = mDb.collection(getString(R.string.collection_users))
+//                                .document(id);
+//
+//                        userRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+//                            @Override
+//                            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+//                                if (task.isSuccessful()) {
+//                                    Log.d(TAG, "onComplete: successfully set the user client.");
+//
+//                                    Boolean active = task.getResult().getBoolean("active");
+//                                    //Boolean active = true;
+//                                    //Sätts till 0 pga null i Firebase. Ska senare använda:
+//                                    int conncount = Math.toIntExact((long) task.getResult().get("connectionCounter"));
+//                                    // int conncount = 0;
+//                                    String email = task.getResult().getString("email");
+//                                    Date handshakeTime = task.getResult().getDate("handShakeTime");
+//
+//
+//                                    Boolean handshakeDetected = task.getResult().getBoolean("handshakeDetected");
+//
+//                                    User potentialMatch = (User) task.getResult().get("potentialMatch");
+//
+//                                    String user_id = task.getResult().getString("user_id");
+//                                    String username = task.getResult().getString("username");
+//                                    GeoPoint geoPoint = task.getResult().getGeoPoint("geo_point");
+//                                    Date timestamp = task.getResult().getDate("timestamp");
+//
+//
+//                                    User user = new User(active, conncount, email, handshakeTime, handshakeDetected, potentialMatch, user_id, username, geoPoint, timestamp);
+//                                    allUsersList.add(user);
+//                                    Log.d(TAG, "Rövballe" + allUsersList.toString());
+//                                    Log.d(TAG, "Hästkuk: " + mUser.getUsername());
+//                                    //    mUser = task.getResult().toObject(User.class);
+//                                    //                                  Log.d(TAG, "HEJHEJ" + task.getResult().toString());
+////                                    Log.d(TAG, "HEJHEJ " + " GEOPOINT " + /*+ task.getResult().getData().containsValue("edvinheterjag@edvin.se")  + " LATIDUDE: " + task.getResult().getGeoPoint("geo_point").getLatitude() + " DATE: " + task.getResult().getDate("timestamp"));
+//
+//
+//                                }
+//                            }
+//                        });
+//
+//                    }
+//                    //Log.d(TAG, "BALLEDRÄNG" + idList.toString());
+//                }
+//            }
+//
+//        });
+//    }
 
 }
