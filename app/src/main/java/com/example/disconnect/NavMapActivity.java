@@ -23,7 +23,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
-import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -31,18 +30,11 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.GeoPoint;
-import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.HashMap;
 
 public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -51,7 +43,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private static final int LOCATION_REQ_CODE = 1234;
     private static final float DEFAULT_ZOOM = 17f;
     private String[] permission = {Manifest.permission.ACCESS_FINE_LOCATION};
-
     private GoogleMap mMap;
     private LocationManager locationManager;
     private MyLocationListener locationListener;
@@ -65,8 +56,9 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private Circle myCircle;
     private User potentialMatch;
     private User nearbyUser;
-    private String prevStatus;
-    private boolean backOnline = false;
+    private HashMap<User, Circle> userCircleHashMap;
+    private boolean hasPotentialMatch;
+    private boolean hasNearbyUsers;
 
     // User object representing user of current session
     private User mUser;
@@ -92,6 +84,10 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         nearbyUsers = new ArrayList<>();
         statusOffline();
 
+        potentialMatch = new User();
+        hasPotentialMatch = false;
+        hasNearbyUsers = false;
+
         FloatingActionButton gpsButton = findViewById(R.id.gps_button);
         gpsButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -102,7 +98,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 dbHandler.updateUser(mUser);
                 Log.d(TAG, "Elrond " + mUser.getUser_id() + mUser.getEmail() + mUser.getTimestamp());
                 Log.d(TAG, "Arwen " + allUsersList.toString());
-
 
                 if (!mLocationPermissionGranted) {
                     getLocationPermission();
@@ -118,10 +113,11 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                         resetMap();
                         enableMapLocation(true);
                         shareLocation = true;
+                        mUser.setActive(true);
                         try {
                             mockUsers();
                         } catch (Exception e) {
-                            Log.d(TAG, "onMapReady: mockUsers, Permission needed?");
+                            Log.d(TAG, "OnButtonClick Error: " + e.getMessage());
                         }
                     } else {
                         Toast.makeText(NavMapActivity.this, "Your location is hidden from other users", Toast.LENGTH_SHORT).show();
@@ -129,22 +125,20 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                         mMap.clear();
                         enableMapLocation(false);
                         shareLocation = false;
+                        hasPotentialMatch = false;
+                        mUser.setActive(false);
                     }
-
                 } else {
                     statusOffline();
                     Toast.makeText(NavMapActivity.this, "Please turn on Location", Toast.LENGTH_LONG).show();
                     mMap.clear();
                     enableMapLocation(false);
                 }
-
             }
         });
-
         getLocationPermission();
         initMap();
     }
-
 
     //Menyraden
     @Override
@@ -154,21 +148,17 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 signOut();
                 return true;
             }
-
             default: {
                 return super.onOptionsItemSelected(item);
             }
         }
-
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
-
     }
 
     private void signOut() {
@@ -180,7 +170,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         startActivity(intent);
         finish();
     }
-
 
     private void initMap() {
         Log.d(TAG, "initMap: map is initialized");
@@ -219,6 +208,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                         0, locationListener);
                 currentLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                 currentLatLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+                centerMap(currentLatLng);
                 return true;
             } else {
                 statusOffline();
@@ -227,14 +217,10 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 return false;
             }
         } catch (SecurityException e) {
-
             statusOffline();
             Log.d(TAG, "updateDeviceLocation: SecurityException: " + e.getMessage());
             Toast.makeText(NavMapActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
             return false;
-
-
-
         }
     }
 
@@ -323,31 +309,60 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     }
 
     private void statusOffline() {
-        prevStatus = status;
         status = "Offline";
         setTitle(status);
     }
 
     private void statusOnline() {
-        prevStatus = status;
         status = "Online";
         setTitle(status);
     }
 
     private void statusNearbyUsers(int count) {
-        prevStatus = status;
         status = "Nearby users: " + count;
         setTitle(status);
     }
 
-    private void awaitingHandshake() {
-        prevStatus = status;
+    private void statusAwaitingHandshake() {
         status = "Awaiting handshake";
         setTitle(status);
     }
 
+    private void updatePotentialMatch(User user) {
+        if (hasPotentialMatch && potentialMatch.getUser_id().equals(user.getUser_id())) {
+            Log.d(TAG, "updatePotentialMatch: Reset");
+            resetPotentialMatch();
+            //TODO: if nearby users: status, else online
+            if (hasNearbyUsers) {
+                statusNearbyUsers(nearbyUsers.size());
+            } else {
+                statusOnline();
+            }
+        } else if (hasPotentialMatch) {
+            Log.d(TAG, "updatePotentialMatch: Reset and set");
+            resetPotentialMatch();
+            setPotentialMatch(user);
+            statusAwaitingHandshake();
+        } else {
+            Log.d(TAG, "updatePotentialMatch: Set");
+            setPotentialMatch(user);
+            statusAwaitingHandshake();
+        }
+    }
+
     private void setPotentialMatch(User user) {
+        Log.d(TAG, "setPotentialMatch: user's id: " + user.getUser_id());
         potentialMatch = user;
+        Circle circle = userCircleHashMap.get(potentialMatch);
+        circle.setStrokeColor(Color.WHITE);
+        hasPotentialMatch = true;
+    }
+
+    private void resetPotentialMatch() {
+        Log.d(TAG, "resetPotentialMatch: user's id: " + potentialMatch.getUser_id());
+        Circle circle = userCircleHashMap.get(potentialMatch);
+        circle.setStrokeColor(Color.MAGENTA);
+        hasPotentialMatch = false;
     }
 
     public void updateNearbyUsers(ArrayList<User> allUsers) {
@@ -359,7 +374,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
 
         boolean oldListEmpty;
-
         if (nearbyUsers == null) {
             oldListEmpty = true;
             Log.d(TAG, "nearbyUsers is null");
@@ -379,12 +393,17 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             double distance =  locationDistance(currentLatLng.latitude, currentLatLng.longitude, otherLocation.latitude, otherLocation.longitude);
             Log.d(TAG, "Your location is: " + currentLatLng.latitude + " : " + currentLatLng.longitude);
             Log.d(TAG, user.getUsername() + "'s location is: " + otherLocation.latitude + " : " + user.getLocation().longitude);
-            Log.d(TAG, "The distance to " + user.getUsername()+ " is: " + Double.toString(distance));
+            Log.d(TAG, "The distance to " + user.getUsername()+ " is: " + (distance));
 
             if (user.isActive() && distance < 100) {
-                if (distance <= 20) {
-                    nearbyUsers.add(user);
-                    createNearbyUser(user);
+                if (distance <= 50) {
+                    Log.d(TAG, "user's id: " + user.getUser_id());
+                    if (hasPotentialMatch && user.getUser_id().equals(potentialMatch.getUser_id())) {
+                        createPotentialUser(user);
+                    } else {
+                        nearbyUsers.add(user);
+                        createNearbyUser(user);
+                    }
                 } else {
                     createDistantUser(user);
                 }
@@ -392,13 +411,20 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
 
         if (!nearbyUsers.isEmpty()) {
+            hasNearbyUsers = true;
             statusNearbyUsers(nearbyUsers.size());
+        } else {
+            hasNearbyUsers = false;
         }
-
 
         //if (oldListEmpty && !nearbyUsers.isEmpty()) {
         if (!nearbyUsers.isEmpty()) {
-            Toast.makeText(NavMapActivity.this, "A user is nearby!", Toast.LENGTH_LONG).show();
+            int nUsers = nearbyUsers.size();
+            if (nUsers == 1) {
+                Toast.makeText(NavMapActivity.this, "A user is nearby!", Toast.LENGTH_LONG).show();
+            } else if (nUsers > 1) {
+                Toast.makeText(NavMapActivity.this, nUsers + " users are nearby!", Toast.LENGTH_LONG).show();
+            }
 
             if (!(!oldListEmpty && nearbyUsers.isEmpty())) {
                 vibrate();
@@ -408,7 +434,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
     }
 
-    public void createNearbyUser(User user) {
+    public void createNearbyUser(final User user) {
         nearbyUser = user;
         CircleOptions nearbyOpt = new CircleOptions()
                 .center(new LatLng(user.getLocation().latitude, user.getLocation().longitude))
@@ -417,12 +443,34 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 .strokeColor(Color.MAGENTA)
                 .fillColor(Color.MAGENTA)
                 .zIndex(2);
-        mMap.addCircle(nearbyOpt);
+        Circle circle = mMap.addCircle(nearbyOpt);
+        userCircleHashMap.put(user, circle);
         mMap.setOnCircleClickListener(new GoogleMap.OnCircleClickListener() {
             @Override
             public void onCircleClick(Circle circle) {
-                setPotentialMatch(nearbyUser);
-                awaitingHandshake();
+                //setPotentialMatch(nearbyUser);
+                updatePotentialMatch(nearbyUser);
+            }
+        });
+    }
+
+    public void createPotentialUser(User user) {
+        nearbyUser = user;
+        CircleOptions nearbyOpt = new CircleOptions()
+                .center(new LatLng(user.getLocation().latitude, user.getLocation().longitude))
+                .clickable(true)
+                .radius(6)
+                .strokeColor(Color.WHITE)
+                .fillColor(Color.MAGENTA)
+                .zIndex(2);
+        Circle circle = mMap.addCircle(nearbyOpt);
+        userCircleHashMap.put(user, circle);
+        Log.d(TAG, "createNearbyUser: A circle for " + user.getUsername() + " has been created");
+        mMap.setOnCircleClickListener(new GoogleMap.OnCircleClickListener() {
+            @Override
+            public void onCircleClick(Circle circle) {
+                //setPotentialMatch(nearbyUser);
+                updatePotentialMatch(nearbyUser);
             }
         });
     }
@@ -435,7 +483,9 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 .strokeColor(Color.GRAY)
                 .fillColor(Color.GRAY)
                 .zIndex(2);
-        mMap.addCircle(distantOpt);
+        Circle circle = mMap.addCircle(distantOpt);
+        userCircleHashMap.put(user, circle);
+        Log.d(TAG, "createDistantUser: A circle for " + user.getUsername() + " has been created");
     }
 
     private void mockUsers() {
@@ -467,7 +517,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         user4.setEmail("user4@example.com");
         user4.setUser_id("4");
         user4.setUsername("user4");
-        user4.setActive(false);
+        user4.setActive(true);
 
         //User user5
         User user5 = new User();
@@ -488,11 +538,11 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         user3.setLocation(l3);
         Log.d(TAG, "mockUsers: user3's location is: " + (user3.getLocation().latitude) + " : " + (user3.getLocation().longitude));
 
-        LatLng l4 = new LatLng(55.711452, 13.209999);
+        LatLng l4 = new LatLng(55.699880, 13.177570);
         user4.setLocation(l4);
         Log.d(TAG, "mockUsers: user4's location is: " + (user4.getLocation().latitude) + " : " + (user4.getLocation().longitude));
 
-        LatLng l5 = new LatLng(55.711270, 13.208153);
+        LatLng l5 = new LatLng(55.699916, 13.177638);
         user5.setLocation(l5);
         Log.d(TAG, "mockUsers: user5's location is: " + (user5.getLocation().latitude) + " : " + (user5.getLocation().longitude));
 
@@ -500,7 +550,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         users.add(user2);
         users.add(user3);
         users.add(user4);
-
+        users.add(user5);
+        userCircleHashMap = new HashMap<>();
         updateNearbyUsers(users);
     }
 
@@ -540,5 +591,4 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             Log.d(TAG, "vibrate: error message " + e.getMessage());
         }
     }
-
 }
