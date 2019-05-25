@@ -7,7 +7,10 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -62,6 +65,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private Circle myCircle;
     private User potentialMatch;
     private User nearbyUser;
+    private String prevStatus;
+    private boolean backOnline = false;
 
     // User object representing user of current session
     private User mUser;
@@ -91,7 +96,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         gpsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 //Stuff to test DBHandler
                 mUser.setHandshakeDetected(false);
                 mUser.setActive(false);
@@ -200,7 +204,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             centerMap(currentLatLng);
         } else {
             statusOffline();
-            Toast.makeText(this, "Please turn on Location", Toast.LENGTH_LONG).show();
+           // Toast.makeText(this, "Please turn on Location", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -319,21 +323,25 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     }
 
     private void statusOffline() {
+        prevStatus = status;
         status = "Offline";
         setTitle(status);
     }
 
     private void statusOnline() {
+        prevStatus = status;
         status = "Online";
         setTitle(status);
     }
 
     private void statusNearbyUsers(int count) {
+        prevStatus = status;
         status = "Nearby users: " + count;
         setTitle(status);
     }
 
     private void awaitingHandshake() {
+        prevStatus = status;
         status = "Awaiting handshake";
         setTitle(status);
     }
@@ -388,24 +396,15 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
 
 
-        if (oldListEmpty && !nearbyUsers.isEmpty()) {
+        //if (oldListEmpty && !nearbyUsers.isEmpty()) {
+        if (!nearbyUsers.isEmpty()) {
             Toast.makeText(NavMapActivity.this, "A user is nearby!", Toast.LENGTH_LONG).show();
 
-/*            //Todo: vibrate
-            try {
-                Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-// Vibrate for 500 milliseconds
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    v.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE));
-                } else {
-                    //deprecated in API 26
-                    v.vibrate(500);
-                }
-            } catch (Exception e) {
-                Log.d(TAG, "updateNearbyUsers: error message " + e.getMessage());
-            }*/
+            if (!(!oldListEmpty && nearbyUsers.isEmpty())) {
+                vibrate();
+            }
         } else if (nearbyUsers.isEmpty()){
-            Toast.makeText(NavMapActivity.this, "No user is nearby", Toast.LENGTH_LONG).show();
+            //Toast.makeText(NavMapActivity.this, "No user is nearby", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -415,7 +414,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 .center(new LatLng(user.getLocation().latitude, user.getLocation().longitude))
                 .clickable(true)
                 .radius(6)
-                .strokeColor(Color.WHITE)
+                .strokeColor(Color.MAGENTA)
                 .fillColor(Color.MAGENTA)
                 .zIndex(2);
         mMap.addCircle(nearbyOpt);
@@ -440,69 +439,70 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     }
 
     private void mockUsers() {
-        /*
         ArrayList<User> users = new ArrayList<>();
 
-        User user1 = new User("user1@example.com", "1", "user1", true);
-        User user2 = new User("user2@example.com", "2", "user2", true);
+        //User user1 = new User("user1@example.com", "1", "user1", true);
+        User user1 = new User();
+        user1.setEmail("user1@example.com");
+        user1.setUser_id("1");
+        user1.setUsername("user1");
+        user1.setActive(true);
+
+        //User user2 = new User("user2@example.com", "2", "user2", true);
+        User user2 = new User();
+        user2.setEmail("user2@example.com");
+        user2.setUser_id("2");
+        user2.setUsername("user2");
+        user2.setActive(true);
+
+        //User user3
+        User user3 = new User();
+        user3.setEmail("user3@example.com");
+        user3.setUser_id("3");
+        user3.setUsername("user3");
+        user3.setActive(true);
+
+        //User user4
+        User user4 = new User();
+        user4.setEmail("user4@example.com");
+        user4.setUser_id("4");
+        user4.setUsername("user4");
+        user4.setActive(false);
+
+        //User user5
+        User user5 = new User();
+        user5.setEmail("user5@example.com");
+        user5.setUser_id("5");
+        user5.setUsername("user5");
+        user5.setActive(true);
 
         LatLng l1 = new LatLng(55.711258, 13.208153);
         user1.setLocation(l1);
-
-        Log.d(TAG, "mockUsers: user1's location is: " + Double.toString(user1.getLocation().latitude) + " : " + Double.toString(user1.getLocation().longitude));
+        Log.d(TAG, "mockUsers: user1's location is: " + (user1.getLocation().latitude) + " : " + (user1.getLocation().longitude));
 
         LatLng l2 = new LatLng(55.711452, 13.209188);
         user2.setLocation(l2);
-        Log.d(TAG, "mockUsers: user2's location is: " + Double.toString(user2.getLocation().latitude) + " : " + Double.toString(user2.getLocation().longitude));
+        Log.d(TAG, "mockUsers: user2's location is: " + (user2.getLocation().latitude) + " : " + (user2.getLocation().longitude));
+
+        LatLng l3 = new LatLng(55.711258, 13.209999);
+        user3.setLocation(l3);
+        Log.d(TAG, "mockUsers: user3's location is: " + (user3.getLocation().latitude) + " : " + (user3.getLocation().longitude));
+
+        LatLng l4 = new LatLng(55.711452, 13.209999);
+        user4.setLocation(l4);
+        Log.d(TAG, "mockUsers: user4's location is: " + (user4.getLocation().latitude) + " : " + (user4.getLocation().longitude));
+
+        LatLng l5 = new LatLng(55.711270, 13.208153);
+        user5.setLocation(l5);
+        Log.d(TAG, "mockUsers: user5's location is: " + (user5.getLocation().latitude) + " : " + (user5.getLocation().longitude));
 
         users.add(user1);
         users.add(user2);
+        users.add(user3);
+        users.add(user4);
 
         updateNearbyUsers(users);
-        */
     }
-
-//    public void createDistantUser() {
-//        Location l1 = new Location(currentLocation);
-//        LatLng ll1 = new LatLng(55.714911, 13.215717);
-//
-//        l1.setLatitude(ll1.latitude);
-//        l1.setLongitude(ll1.longitude);
-//
-//        CircleOptions distantOpt = new CircleOptions()
-//                .center(ll1)
-//                .clickable(false)
-//                .radius(10)
-//                .strokeColor(Color.LTGRAY)
-//                .fillColor(Color.LTGRAY);
-//        mMap.addCircle(distantOpt);
-//    }
-//
-//    public void createNearbyUser() {
-//        Location l1 = new Location(currentLocation);
-//        LatLng ll1 = new LatLng(55.710365, 13.208238);
-//
-//        l1.setLatitude(ll1.latitude);
-//        l1.setLongitude(ll1.longitude);
-//
-//        CircleOptions nearbyOpt = new CircleOptions()
-//                .center(ll1)
-//                .clickable(false)
-//                .radius(6)
-//                .strokeColor(Color.WHITE)
-//                .fillColor(Color.MAGENTA)
-//                .zIndex(2);
-//        myCircle = mMap.addCircle(nearbyOpt);
-//        myCircle.setClickable(true);
-//        mMap.setOnCircleClickListener(new GoogleMap.OnCircleClickListener() {
-//            @Override
-//            public void onCircleClick(Circle circle) {
-//                //setPotentialMatch();
-//                awaitingHandshake();
-//            }
-//        });
-//    }
-
 
     private double locationDistance(double lat1, double lon1, double lat2, double lon2) {
         double dist = 0;
@@ -524,6 +524,21 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
     public void setAllUsersList(ArrayList<User> allUsersList){
         this.allUsersList = allUsersList;
+    }
+
+    private void vibrate() {
+        try {
+            Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+            // Vibrate for 500 milliseconds
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                v.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                //deprecated in API 26
+                v.vibrate(500);
+            }
+        } catch (Exception e) {
+            Log.d(TAG, "vibrate: error message " + e.getMessage());
+        }
     }
 
 }
