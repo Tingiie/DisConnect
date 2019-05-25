@@ -92,13 +92,13 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             @Override
             public void onClick(View view) {
 
-                /*Stuff to test DBHandler
-                mUser.setHandshakeDetected(true);
-                mUser.setActive(true);
+                //Stuff to test DBHandler
+                mUser.setHandshakeDetected(false);
+                mUser.setActive(false);
                 dbHandler.updateUser(mUser);
                 Log.d(TAG, "Elrond " + mUser.getUser_id() + mUser.getEmail() + mUser.getTimestamp());
                 Log.d(TAG, "Arwen " + allUsersList.toString());
-                */
+
 
                 if (!mLocationPermissionGranted) {
                     getLocationPermission();
