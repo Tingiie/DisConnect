@@ -3,6 +3,14 @@ package com.example.disconnect;
 import android.location.Location;
 import android.os.Parcel;
 import android.os.Parcelable;
+
+
+//import com.google.android.gms.maps.model.LatLng;
+//
+//import java.util.Date;
+//
+//public class User implements Parcelable{
+
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -19,14 +27,13 @@ public class User implements Parcelable {
     private String user_id;
     private String username;
     private boolean active;
-    //   private Location location;
+    private LatLng location;
     private boolean handshakeDetected;
     private Date handShakeTime;
     private User potentialMatch;
     private int connectionCounter;
     private GeoPoint geo_point = new GeoPoint(1.0, 2.0);
-    private @ServerTimestamp
-    Date timestamp;
+    private @ServerTimestamp Date timestamp;
 
 
     public User() {
@@ -49,13 +56,13 @@ public class User implements Parcelable {
     }
 
 
+
     protected User(Parcel in) {
         email = in.readString();
         user_id = in.readString();
         username = in.readString();
         active = Boolean.parseBoolean(in.readString());
         timestamp = null;
-
         // avatar = in.readString();
     }
 
@@ -91,11 +98,12 @@ public class User implements Parcelable {
         this.email = email;
     }
 
+
     public void setActive(boolean active) {
         this.active = active;
     }
 
-    public boolean getActive() {
+    public boolean isActive() {
         return active;
     }
 
@@ -127,7 +135,6 @@ public class User implements Parcelable {
                 '}';
         //", avatar='" + avatar + '\'' +
     }
-
 
     @Override
     public int describeContents() {
@@ -197,6 +204,4 @@ public class User implements Parcelable {
     public void incConnectionCounter() {
         this.connectionCounter++;
     }
-
-
 }
