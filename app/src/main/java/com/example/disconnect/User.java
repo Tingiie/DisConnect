@@ -53,6 +53,8 @@ public class User implements Parcelable {
         this.potentialMatch = potentialMatch;
         this.geo_point = geo_point;
         this.timestamp = timestamp;
+
+
     }
 
 

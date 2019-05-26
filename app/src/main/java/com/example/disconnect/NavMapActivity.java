@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -39,7 +40,10 @@ import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+
+import static com.google.common.collect.ComparisonChain.start;
 
 public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -62,6 +66,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private Circle myCircle;
     private User potentialMatch;
     private User nearbyUser;
+    private final DBHandler dbHandler =  new DBHandler();
 
     // User object representing user of current session
     private User mUser;
@@ -75,31 +80,43 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         setContentView(R.layout.activity_nav_map);
 
         FirebaseFirestore mDb = FirebaseFirestore.getInstance();
-        final DBHandler dbHandler = new DBHandler();
+
         dbHandler.setmDb(mDb);
         dbHandler.setActivity(this);
         //Log.d(TAG, "Legolas" + "Current user id: " + FirebaseAuth.getInstance().getUid() + "mDb: " + mDb.toString());
         dbHandler.getUser();
         dbHandler.getAllUsers();
 
+        User testUser = new User();
+        testUser.setActive(true);
+        testUser.setEmail("hej123@hej.se");
+        testUser.setHandShakeTime(Calendar.getInstance().getTime());
+        testUser.setHandshakeDetected(true);
+        testUser.setPotentialMatch(mUser);
+        testUser.setTimestamp(Calendar.getInstance().getTime());
+
+        potentialMatch = testUser;
+
+
         locationListener = new MyLocationListener(this, DEFAULT_ZOOM);
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         nearbyUsers = new ArrayList<>();
         statusOffline();
-
         FloatingActionButton gpsButton = findViewById(R.id.gps_button);
         gpsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
-                /*Stuff to test DBHandler
-                mUser.setHandshakeDetected(true);
-                mUser.setActive(true);
-                dbHandler.updateUser(mUser);
-                Log.d(TAG, "Elrond " + mUser.getUser_id() + mUser.getEmail() + mUser.getTimestamp());
-                Log.d(TAG, "Arwen " + allUsersList.toString());
-                */
+                onHandshake();
 
+                //Stuff to test DBHandler
+                //mUser.setHandshakeDetected(false);
+                //mUser.setActive(false);
+                //dbHandler.updateUser(mUser);
+                //Log.d(TAG, "Elrond " + mUser.getUser_id() + mUser.getEmail() + mUser.getTimestamp());
+                //Log.d(TAG, "Arwen " + allUsersList.toString());
+
+                /*
                 if (!mLocationPermissionGranted) {
                     getLocationPermission();
                     initMap();
@@ -133,7 +150,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                     mMap.clear();
                     enableMapLocation(false);
                 }
-
+            */
             }
         });
 
@@ -525,5 +542,77 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     public void setAllUsersList(ArrayList<User> allUsersList){
         this.allUsersList = allUsersList;
     }
+
+    public void onHandshake(){
+        if(potentialMatch == null){
+            return;
+        }
+        Log.d(TAG, "Haldir1");
+        mUser.setHandshakeDetected(true);
+        mUser.setHandShakeTime(Calendar.getInstance().getTime());
+        dbHandler.updateUser(mUser);
+        HandshakeTimer h = new HandshakeTimer(2000, 200);
+        h.start();
+
+
+        Toast.makeText(NavMapActivity.this, mUser.getHandShakeTime().toString(), Toast.LENGTH_SHORT).show();
+
+    }
+
+
+    private class HandshakeTimer extends CountDownTimer {
+
+
+        public HandshakeTimer(long millisInFuture, long countDownInterval) {
+            super(millisInFuture, countDownInterval);
+        }
+
+        @Override
+        public void onTick(long millisUntilFinished) {
+            Log.d(TAG, "Haldir3");
+            boolean matchUserActive = false;
+            boolean matchUserHandshake = false;
+            Date matchUserHandshakeTime = mUser.getHandShakeTime();
+
+            dbHandler.getAllUsers();
+
+            //Might want to check for null. But maybe not
+            /*
+            for(User u : allUsersList){
+                if(u.getUser_id().equals(potentialMatch.getUser_id())){
+                    matchUserHandshake = u.isHandshakeDetected();
+                    matchUserHandshakeTime = u.getHandShakeTime();
+                    matchUserActive = u.isActive();
+
+                }
+            }
+
+            */
+
+            //testa hårdkodad användare:
+            matchUserHandshake = potentialMatch.isHandshakeDetected();
+            matchUserHandshakeTime = potentialMatch.getHandShakeTime();
+            matchUserActive = potentialMatch.isActive();
+
+
+
+            long handshakeTimeDiff = matchUserHandshakeTime.getTime() - mUser.getHandShakeTime().getTime();
+            Log.d(TAG, "Handskaksdifferens: " + handshakeTimeDiff + "andra användaren aktiv: " + matchUserActive + "andra användaren handskakat " + matchUserHandshake);
+            if(matchUserActive && matchUserHandshake && handshakeTimeDiff < 10000) {
+                //we have match????????????????????????????????????????????????????????????
+                Log.d(TAG, "Haldir");
+                Toast.makeText(NavMapActivity.this, "VI KOM HELA VÄGEN HIT", Toast.LENGTH_SHORT).show();
+            }
+        }
+
+        @Override
+        public void onFinish() {
+            //reset potentialMatch
+            statusOnline();
+            mUser.setHandshakeDetected(false);
+            dbHandler.updateUser(mUser);
+        }
+    }
+
 
 }
