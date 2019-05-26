@@ -49,7 +49,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private static final int LOCATION_REQ_CODE = 1234;
     private static final float DEFAULT_ZOOM = 17.5f;
     private static final int RADIUS = 75;
-    private static final int maxDistance = 20;
+    private static final int maxDistance = 50;
     private static final int distantMarker = R.drawable.gray_marker;
     private static final int nearbyMarker = R.drawable.pngrosa;
     private static final int outlinedMarker = R.drawable.bigdot;
@@ -113,7 +113,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         gpsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                onHandshake();
+                //onHandshake();
 
                 //Stuff to test DBHandler
                 //mUser.setHandshakeDetected(false);
@@ -121,13 +121,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 //dbHandler.updateUser(mUser);
                 //Log.d(TAG, "Elrond " + mUser.getUser_id() + mUser.getEmail() + mUser.getTimestamp());
                 //Log.d(TAG, "Arwen " + allUsersList.toString());
-
-                //Stuff to test DBHandler
-                mUser.setHandshakeDetected(false);
-                mUser.setActive(false);
-                dbHandler.updateUser(mUser);
-                Log.d(TAG, "Elrond " + mUser.getUser_id() + mUser.getEmail() + mUser.getTimestamp());
-                Log.d(TAG, "Arwen " + allUsersList.toString());
 
                 if (!mLocationPermissionGranted) {
                     getLocationPermission();
@@ -598,17 +591,26 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     }
 
     public void onHandshake(){
-        if(potentialMatch == null){
+        if(!hasPotentialMatch || !mUser.isActive()) {
             return;
         }
-        Log.d(TAG, "Haldir1");
-        mUser.setHandshakeDetected(true);
-        mUser.setHandShakeTime(Calendar.getInstance().getTime());
-        dbHandler.updateUser(mUser);
-        HandshakeTimer h = new HandshakeTimer(2000, 200);
-        h.start();
+        Log.d(TAG, "onHandshake: potentialMatch is not null and current user is active");
 
-        Toast.makeText(NavMapActivity.this, mUser.getHandShakeTime().toString(), Toast.LENGTH_SHORT).show();
+
+        try {
+            User potentialMe = potentialMatch.getPotentialMatch();
+            if (potentialMe.equals(mUser)) {
+                mUser.setHandshakeDetected(true);
+                mUser.setHandShakeTime(Calendar.getInstance().getTime());
+                dbHandler.updateUser(mUser);
+
+                HandshakeTimer h = new HandshakeTimer(2000, 200);
+                h.start();
+            }
+        } catch(Exception e) {
+            Log.d(TAG, "onHandshake: potentialMatch's something is null");
+            return;
+        }
     }
 
 
@@ -619,51 +621,48 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
         @Override
         public void onTick(long millisUntilFinished) {
-            Log.d(TAG, "Haldir3");
-            boolean matchUserActive = false;
-            boolean matchUserHandshake = false;
-            Date matchUserHandshakeTime = mUser.getHandShakeTime();
+            Log.d(TAG, "onTick: ");
+
+            if (!hasPotentialMatch) {
+                if (nearbyUsers.isEmpty()) {
+                    statusOnline();
+                } else {
+                    statusNearbyUsers(nearbyUsers.size());
+                }
+                return;
+            }
 
             dbHandler.getAllUsers();
-
-            //Might want to check for null. But maybe not
-            /*
-            for(User u : allUsersList){
-                if(u.getUser_id().equals(potentialMatch.getUser_id())){
-                    matchUserHandshake = u.isHandshakeDetected();
-                    matchUserHandshakeTime = u.getHandShakeTime();
-                    matchUserActive = u.isActive();
-
+            for (User u : allUsersList) {
+                if(u.equals(potentialMatch)) {
+                    potentialMatch = u;
                 }
             }
 
-            */
+            User potentialMe = potentialMatch.getPotentialMatch();
+            long handshakeTimeDiff = Math.abs(potentialMatch.getHandShakeTime().getTime() - mUser.getHandShakeTime().getTime());
 
-            //testa hårdkodad användare:
-            Log.d(TAG, "onTick: potentialMatch: " + potentialMatch.getUsername());
-            matchUserHandshake = potentialMatch.isHandshakeDetected();
-            matchUserHandshakeTime = potentialMatch.getHandShakeTime();
-            Log.d(TAG, "onTick: My handshake time: " + mUser.getHandShakeTime());
-            Log.d(TAG, "onTick: potentialMatch's time: " + matchUserHandshakeTime);
-            matchUserActive = potentialMatch.isActive();
-
-
-
-            long handshakeTimeDiff = matchUserHandshakeTime.getTime() - mUser.getHandShakeTime().getTime();
-            Log.d(TAG, "Handskaksdifferens: " + handshakeTimeDiff + "andra användaren aktiv: " + matchUserActive + "andra användaren handskakat " + matchUserHandshake);
-            if(matchUserActive && matchUserHandshake && handshakeTimeDiff < 10000) {
-                //we have match????????????????????????????????????????????????????????????
-                Log.d(TAG, "Haldir");
-                Toast.makeText(NavMapActivity.this, "VI KOM HELA VÄGEN HIT", Toast.LENGTH_SHORT).show();
+            if (potentialMe.equals(mUser) && potentialMatch.isActive() && potentialMatch.isHandshakeDetected() && handshakeTimeDiff < 10000) {
+                //back online or nearby users
+                //connect, new intent
+                //counter++
+                //resetMatch
+                //updateUser
+                Toast.makeText(NavMapActivity.this, "Connecting people!!!!!!!!!", Toast.LENGTH_LONG).show();
             }
         }
 
         @Override
         public void onFinish() {
-            //reset potentialMatch
-            statusOnline();
+            //resetMatch
             mUser.setHandshakeDetected(false);
             dbHandler.updateUser(mUser);
+            //back online or nearby users
+            if (nearbyUsers.isEmpty()) {
+                statusOnline();
+            } else {
+                statusNearbyUsers(nearbyUsers.size());
+            }
         }
     }
 
