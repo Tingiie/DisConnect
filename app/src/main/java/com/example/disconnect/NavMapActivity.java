@@ -89,6 +89,14 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         dbHandler.getUser();
         dbHandler.getAllUsers();
 
+        locationListener = new MyLocationListener(this, DEFAULT_ZOOM);
+        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        nearbyUsers = new ArrayList<>();
+        statusOffline();
+        potentialMatch = new User();
+        hasPotentialMatch = false;
+
+        //---Test----------
         User testUser = new User();
         testUser.setActive(true);
         testUser.setEmail("hej123@hej.se");
@@ -98,14 +106,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         testUser.setTimestamp(Calendar.getInstance().getTime());
 
         potentialMatch = testUser;
-
-
-        locationListener = new MyLocationListener(this, DEFAULT_ZOOM);
-        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        nearbyUsers = new ArrayList<>();
-        statusOffline();
-        potentialMatch = new User();
-        hasPotentialMatch = false;
+        hasPotentialMatch = true;
+        //------------------
 
         FloatingActionButton gpsButton = findViewById(R.id.gps_button);
         gpsButton.setOnClickListener(new View.OnClickListener() {
@@ -606,15 +608,11 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         HandshakeTimer h = new HandshakeTimer(2000, 200);
         h.start();
 
-
         Toast.makeText(NavMapActivity.this, mUser.getHandShakeTime().toString(), Toast.LENGTH_SHORT).show();
-
     }
 
 
     private class HandshakeTimer extends CountDownTimer {
-
-
         public HandshakeTimer(long millisInFuture, long countDownInterval) {
             super(millisInFuture, countDownInterval);
         }
@@ -642,8 +640,11 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             */
 
             //testa hårdkodad användare:
+            Log.d(TAG, "onTick: potentialMatch: " + potentialMatch.getUsername());
             matchUserHandshake = potentialMatch.isHandshakeDetected();
             matchUserHandshakeTime = potentialMatch.getHandShakeTime();
+            Log.d(TAG, "onTick: My handshake time: " + mUser.getHandShakeTime());
+            Log.d(TAG, "onTick: potentialMatch's time: " + matchUserHandshakeTime);
             matchUserActive = potentialMatch.isActive();
 
 
