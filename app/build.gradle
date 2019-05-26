@@ -23,6 +23,7 @@ android {
 
 dependencies {
 
+    implementation 'com.github.nisrulz:sensey:1.8.0'
     implementation 'com.google.firebase:firebase-firestore:18.2.0'
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 

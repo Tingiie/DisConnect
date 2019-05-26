@@ -9,6 +9,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -80,6 +81,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         setContentView(R.layout.activity_nav_map);
 
         FirebaseFirestore mDb = FirebaseFirestore.getInstance();
+        HandshakeDetector handshakeDetector = new HandshakeDetector(this);
 
         dbHandler.setmDb(mDb);
         dbHandler.setActivity(this);
