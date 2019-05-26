@@ -35,7 +35,6 @@ public class User implements Parcelable {
     private GeoPoint geo_point = new GeoPoint(1.0, 2.0);
     private @ServerTimestamp Date timestamp;
 
-
     public User() {
 
     }
@@ -56,8 +55,6 @@ public class User implements Parcelable {
 
 
     }
-
-
 
     protected User(Parcel in) {
         email = in.readString();
@@ -206,4 +203,25 @@ public class User implements Parcelable {
     public void incConnectionCounter() {
         this.connectionCounter++;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        // If the object is compared with itself then return true
+        if (o == this) {
+            return true;
+        }
+
+        /* Check if o is an instance of User or not
+          "null instanceof [type]" also returns false */
+        if (!(o instanceof User)) {
+            return false;
+        }
+
+        // typecast o to User so that we can compare data members
+        User other = (User) o;
+
+        // Compare the data members and return accordingly
+        return this.getUser_id().equals(other.equals(getUser_id()));
+    }
 }
+
