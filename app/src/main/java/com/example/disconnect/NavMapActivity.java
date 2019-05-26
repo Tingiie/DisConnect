@@ -44,6 +44,9 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private static final float DEFAULT_ZOOM = 17.5f;
     private static final int RADIUS = 75;
     private static final int maxDistance = 20;
+    private static final int distantMarker = R.drawable.gray_marker;
+    private static final int nearbyMarker = R.drawable.pngrosa;
+    private static final int outlinedMarker = R.drawable.bigdot;
     private String[] permission = {Manifest.permission.ACCESS_FINE_LOCATION};
     private GoogleMap mMap;
     private LocationManager locationManager;
@@ -183,7 +186,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             @Override
             public boolean onMarkerClick(Marker marker) {
                 Log.d(TAG, "onMapReday: Arwen was here");
-                vibrate(50);
                 updatePotentialMatch(marker);
                 return true;
             }
@@ -338,6 +340,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
 
         if (nearbyUsers.contains(user)) {
+            vibrate(50);
             Log.d(TAG, "updatePotentialMatch: marker is nearby");
             if (!hasPotentialMatch) {
                 Log.d(TAG, "updatePotentialMatch: Set");
@@ -367,7 +370,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         potentialMatch = user;
         currentMarker = marker;
         Log.d(TAG, "setPotentialMatch: marker = " + marker);
-        marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.pink_marker_outline));
+        marker.setIcon(BitmapDescriptorFactory.fromResource(outlinedMarker));
         hasPotentialMatch = true;
     }
 
@@ -377,7 +380,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             User user = (User) currentMarker.getTag();
             Log.d(TAG, "resetPotentialMatch: reset --> user's id: " + potentialMatch.getUser_id());
             Log.d(TAG, "resetPotentialMatch: reset --> marker's id: " + user.getUser_id());
-            currentMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.pink_marker));
+            currentMarker.setIcon(BitmapDescriptorFactory.fromResource(nearbyMarker));
             currentMarker = null;
             hasPotentialMatch = false;
         }
@@ -447,7 +450,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
     public void createNearbyMarker(User user) {
         MarkerOptions opt = new MarkerOptions()
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.pink_marker))
+                .icon(BitmapDescriptorFactory.fromResource(nearbyMarker))
                 .position(new LatLng(user.getLocation().latitude, user.getLocation().longitude));
         Marker marker = mMap.addMarker(opt);
         marker.setTag(user);
@@ -456,7 +459,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
     public void createDistantMarker(User user) {
         MarkerOptions opt = new MarkerOptions()
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.gray_marker))
+                .icon(BitmapDescriptorFactory.fromResource(distantMarker))
                 .position(new LatLng(user.getLocation().latitude, user.getLocation().longitude));
 
         Marker marker = mMap.addMarker(opt);
@@ -466,7 +469,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
     public void createPotentialMarker(User user) {
         MarkerOptions opt = new MarkerOptions()
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.pink_marker_outline))
+                .icon(BitmapDescriptorFactory.fromResource(outlinedMarker))
                 .position(new LatLng(user.getLocation().latitude, user.getLocation().longitude));
 
         Marker marker = mMap.addMarker(opt);
@@ -524,11 +527,11 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         user3.setLocation(l3);
         Log.d(TAG, "mockUsers: user3's location is: " + (user3.getLocation().latitude) + " : " + (user3.getLocation().longitude));
 
-        LatLng l4 = new LatLng(55.699880, 13.177570);
+        LatLng l4 = new LatLng(55.711352, 13.209100);
         user4.setLocation(l4);
         Log.d(TAG, "mockUsers: user4's location is: " + (user4.getLocation().latitude) + " : " + (user4.getLocation().longitude));
 
-        LatLng l5 = new LatLng(55.699960, 13.177770);
+        LatLng l5 = new LatLng(55.711200, 13.208100);
         user5.setLocation(l5);
         Log.d(TAG, "mockUsers: user5's location is: " + (user5.getLocation().latitude) + " : " + (user5.getLocation().longitude));
 
