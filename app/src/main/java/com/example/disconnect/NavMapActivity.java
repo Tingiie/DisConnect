@@ -57,17 +57,12 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private Circle mapCircle;
     private ArrayList<User> nearbyUsers;
     private String status;
-    private Circle myCircle;
     private User potentialMatch;
     private User nearbyUser;
     private HashMap<User, Circle> userCircleHashMap;
     private HashMap<User, Marker> userMarkerHashMap;
     private boolean hasPotentialMatch;
     private boolean hasNearbyUsers;
-    private ClusterManager mClusterManager;
-    private MarkerManagerRenderer markerManagerRenderer;
-    private ArrayList<UserMarker> userMarkers;
-    private ArrayList<User> mockUsers = new ArrayList<>();
 
     // User object representing user of current session
     private User mUser;
@@ -191,6 +186,16 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         //Toast.makeText(this, "Map is ready", Toast.LENGTH_SHORT).show();
         Log.d(TAG, "onMapReady: map is ready");
         mMap = googleMap;
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                if (userMarkerHashMap.get(nearbyUser).equals(marker)) {
+                    updatePotentialMatch(nearbyUser);
+                    return true;
+                }
+                return false;
+            }
+        });
 
         if (hasPermissionAndLocation()) {
             statusOnline();
@@ -341,7 +346,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         if (hasPotentialMatch && potentialMatch.getUser_id().equals(user.getUser_id())) {
             Log.d(TAG, "updatePotentialMatch: Reset");
             resetPotentialMatch();
-            //TODO: if nearby users: status, else online
             if (hasNearbyUsers) {
                 statusNearbyUsers(nearbyUsers.size());
             } else {
@@ -364,9 +368,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         potentialMatch = user;
         Marker marker = userMarkerHashMap.get(potentialMatch);
         marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.pink_marker_outline));
-
-   //     Circle circle = userCircleHashMap.get(potentialMatch);
-   //     circle.setStrokeColor(Color.WHITE);
         hasPotentialMatch = true;
     }
 
@@ -374,15 +375,10 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         Log.d(TAG, "resetPotentialMatch: user's id: " + potentialMatch.getUser_id());
         Marker marker = userMarkerHashMap.get(potentialMatch);
         marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.pink_marker));
-
-  //      Circle circle = userCircleHashMap.get(potentialMatch);
-  //      circle.setStrokeColor(Color.MAGENTA);
         hasPotentialMatch = false;
     }
 
     public void updateNearbyUsers(ArrayList<User> allUsers) {
-        //Toast.makeText(NavMapActivity.this, "Update nearby users", Toast.LENGTH_SHORT).show();
-
         if (allUsers.isEmpty()) {
             Log.d(TAG, "updateNearbyUsers: allUsers i null");
             return;
@@ -423,7 +419,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                     }
                 } else {
                     //createDistantUser(user);
-                    createNearbyMarker(user);
+                    createDistantMarker(user);
                 }
             }
         }
@@ -435,7 +431,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             hasNearbyUsers = false;
         }
 
-        //if (oldListEmpty && !nearbyUsers.isEmpty()) {
         if (!nearbyUsers.isEmpty()) {
             int nUsers = nearbyUsers.size();
             if (nUsers == 1) {
@@ -452,41 +447,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
     }
 
-    private void addMarkers() {
-        if (mClusterManager == null) {
-            mClusterManager = new ClusterManager<UserMarker>(getApplicationContext(), mMap);
-        }
-        if (markerManagerRenderer == null) {
-            markerManagerRenderer = new MarkerManagerRenderer(
-                    this,
-                    mMap,
-                    mClusterManager
-            );
-            mClusterManager.setRenderer(markerManagerRenderer);
-
-            for(User user : mockUsers) {
-                Log.d(TAG, "addMarkers: location " + user.getLocation());
-                try {
-                    String snippet = "";
-                    if (user.getUser_id().equals(FirebaseAuth.getInstance().getUid())) {
-                        Log.d(TAG, "addmarkers: This is you");
-                        snippet = "You";
-                    } else {
-                        snippet = "";
-                    }
-                    int userIcon = R.drawable.pink_marker; // default marker
-                    UserMarker marker = new UserMarker(user.getLocation(), user.getUsername(), userIcon, user);
-                    mClusterManager.addItem(marker);
-                    userMarkers.add(marker);
-                } catch (Exception e) {
-                    Log.d(TAG, "addMarkers: Error " + e.getMessage());
-                }
-            }
-            mClusterManager.cluster();
-        }
-
-    }
-
     public void createNearbyMarker(User user) {
         nearbyUser = user;
         MarkerOptions opt = new MarkerOptions()
@@ -498,15 +458,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         Marker marker = mMap.addMarker(opt);
         userMarkerHashMap.put(user, marker);
         Log.d(TAG, "createNearbyMarker: tag: " + marker.getTag());
-        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-            @Override
-            public boolean onMarkerClick(Marker marker) {
-                if (userMarkerHashMap.get(nearbyUser).equals(marker)) {
-                    updatePotentialMatch(nearbyUser);
-                }
-                return false;
-            }
-        });
     }
 
     public void createPotentialMarker(User user) {
@@ -520,15 +471,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         Marker marker = mMap.addMarker(opt);
         userMarkerHashMap.put(user, marker);
         Log.d(TAG, "createPotentialMarker: tag: " + marker.getTag());
-        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-            @Override
-            public boolean onMarkerClick(Marker marker) {
-                if (userMarkerHashMap.get(nearbyUser).equals(marker)) {
-                    updatePotentialMatch(nearbyUser);
-                }
-                return false;
-            }
-        });
     }
 
     public void createDistantMarker(User user) {
@@ -665,16 +607,9 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         users.add(user4);
         users.add(user5);
 
-        mockUsers.add(user1);
-        mockUsers.add(user2);
-        mockUsers.add(user3);
-        mockUsers.add(user4);
-        mockUsers.add(user5);
-
-        //userMarkerHashMap = new HashMap<>();
-        //userCircleHashMap = new HashMap<>();
-       // updateNearbyUsers(users);
-        addMarkers();
+        userMarkerHashMap = new HashMap<>();
+        userCircleHashMap = new HashMap<>();
+        updateNearbyUsers(users);
     }
 
     private double locationDistance(double lat1, double lon1, double lat2, double lon2) {
