@@ -27,11 +27,15 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.maps.android.clustering.ClusterManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,8 +61,13 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private User potentialMatch;
     private User nearbyUser;
     private HashMap<User, Circle> userCircleHashMap;
+    private HashMap<User, Marker> userMarkerHashMap;
     private boolean hasPotentialMatch;
     private boolean hasNearbyUsers;
+    private ClusterManager mClusterManager;
+    private MarkerManagerRenderer markerManagerRenderer;
+    private ArrayList<UserMarker> userMarkers;
+    private ArrayList<User> mockUsers = new ArrayList<>();
 
     // User object representing user of current session
     private User mUser;
@@ -353,15 +362,21 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private void setPotentialMatch(User user) {
         Log.d(TAG, "setPotentialMatch: user's id: " + user.getUser_id());
         potentialMatch = user;
-        Circle circle = userCircleHashMap.get(potentialMatch);
-        circle.setStrokeColor(Color.WHITE);
+        Marker marker = userMarkerHashMap.get(potentialMatch);
+        marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.pink_marker_outline));
+
+   //     Circle circle = userCircleHashMap.get(potentialMatch);
+   //     circle.setStrokeColor(Color.WHITE);
         hasPotentialMatch = true;
     }
 
     private void resetPotentialMatch() {
         Log.d(TAG, "resetPotentialMatch: user's id: " + potentialMatch.getUser_id());
-        Circle circle = userCircleHashMap.get(potentialMatch);
-        circle.setStrokeColor(Color.MAGENTA);
+        Marker marker = userMarkerHashMap.get(potentialMatch);
+        marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.pink_marker));
+
+  //      Circle circle = userCircleHashMap.get(potentialMatch);
+  //      circle.setStrokeColor(Color.MAGENTA);
         hasPotentialMatch = false;
     }
 
@@ -399,13 +414,16 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 if (distance <= 50) {
                     Log.d(TAG, "user's id: " + user.getUser_id());
                     if (hasPotentialMatch && user.getUser_id().equals(potentialMatch.getUser_id())) {
-                        createPotentialUser(user);
+                        //createPotentialUser(user);
+                        createPotentialMarker(user);
                     } else {
                         nearbyUsers.add(user);
-                        createNearbyUser(user);
+                        //createNearbyUser(user);
+                        createNearbyMarker(user);
                     }
                 } else {
-                    createDistantUser(user);
+                    //createDistantUser(user);
+                    createNearbyMarker(user);
                 }
             }
         }
@@ -434,6 +452,97 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
     }
 
+    private void addMarkers() {
+        if (mClusterManager == null) {
+            mClusterManager = new ClusterManager<UserMarker>(getApplicationContext(), mMap);
+        }
+        if (markerManagerRenderer == null) {
+            markerManagerRenderer = new MarkerManagerRenderer(
+                    this,
+                    mMap,
+                    mClusterManager
+            );
+            mClusterManager.setRenderer(markerManagerRenderer);
+
+            for(User user : mockUsers) {
+                Log.d(TAG, "addMarkers: location " + user.getLocation());
+                try {
+                    String snippet = "";
+                    if (user.getUser_id().equals(FirebaseAuth.getInstance().getUid())) {
+                        Log.d(TAG, "addmarkers: This is you");
+                        snippet = "You";
+                    } else {
+                        snippet = "";
+                    }
+                    int userIcon = R.drawable.pink_marker; // default marker
+                    UserMarker marker = new UserMarker(user.getLocation(), user.getUsername(), userIcon, user);
+                    mClusterManager.addItem(marker);
+                    userMarkers.add(marker);
+                } catch (Exception e) {
+                    Log.d(TAG, "addMarkers: Error " + e.getMessage());
+                }
+            }
+            mClusterManager.cluster();
+        }
+
+    }
+
+    public void createNearbyMarker(User user) {
+        nearbyUser = user;
+        MarkerOptions opt = new MarkerOptions()
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.pink_marker))
+             //   .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
+                .position(new LatLng(nearbyUser.getLocation().latitude, nearbyUser.getLocation().longitude));
+
+       // Marker marker = mMap.addMarker(new MarkerOptions().icon(BitmapDescriptorFactory.fromResource(R.drawable.whatever)).position(new LatLng(mLat, mLong)));
+        Marker marker = mMap.addMarker(opt);
+        userMarkerHashMap.put(user, marker);
+        Log.d(TAG, "createNearbyMarker: tag: " + marker.getTag());
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                if (userMarkerHashMap.get(nearbyUser).equals(marker)) {
+                    updatePotentialMatch(nearbyUser);
+                }
+                return false;
+            }
+        });
+    }
+
+    public void createPotentialMarker(User user) {
+        nearbyUser = user;
+        MarkerOptions opt = new MarkerOptions()
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.pink_marker_outline))
+                //   .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
+                .position(new LatLng(nearbyUser.getLocation().latitude, nearbyUser.getLocation().longitude));
+
+        // Marker marker = mMap.addMarker(new MarkerOptions().icon(BitmapDescriptorFactory.fromResource(R.drawable.whatever)).position(new LatLng(mLat, mLong)));
+        Marker marker = mMap.addMarker(opt);
+        userMarkerHashMap.put(user, marker);
+        Log.d(TAG, "createPotentialMarker: tag: " + marker.getTag());
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                if (userMarkerHashMap.get(nearbyUser).equals(marker)) {
+                    updatePotentialMatch(nearbyUser);
+                }
+                return false;
+            }
+        });
+    }
+
+    public void createDistantMarker(User user) {
+        nearbyUser = user;
+        MarkerOptions opt = new MarkerOptions()
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.gray_marker))
+                //   .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
+                .position(new LatLng(nearbyUser.getLocation().latitude, nearbyUser.getLocation().longitude));
+
+        Marker marker = mMap.addMarker(opt);
+        userMarkerHashMap.put(user, marker);
+        Log.d(TAG, "createDistantMarker: tag: " + marker.getTag());
+    }
+
     public void createNearbyUser(final User user) {
         nearbyUser = user;
         CircleOptions nearbyOpt = new CircleOptions()
@@ -449,7 +558,9 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             @Override
             public void onCircleClick(Circle circle) {
                 //setPotentialMatch(nearbyUser);
-                updatePotentialMatch(nearbyUser);
+                if (userCircleHashMap.get(nearbyUser).equals(circle)) {
+                    updatePotentialMatch(nearbyUser);
+                }
             }
         });
     }
@@ -470,7 +581,9 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             @Override
             public void onCircleClick(Circle circle) {
                 //setPotentialMatch(nearbyUser);
-                updatePotentialMatch(nearbyUser);
+                if (userCircleHashMap.get(nearbyUser).equals(circle)) {
+                    updatePotentialMatch(nearbyUser);
+                }
             }
         });
     }
@@ -542,7 +655,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         user4.setLocation(l4);
         Log.d(TAG, "mockUsers: user4's location is: " + (user4.getLocation().latitude) + " : " + (user4.getLocation().longitude));
 
-        LatLng l5 = new LatLng(55.699916, 13.177638);
+        LatLng l5 = new LatLng(55.699960, 13.177770);
         user5.setLocation(l5);
         Log.d(TAG, "mockUsers: user5's location is: " + (user5.getLocation().latitude) + " : " + (user5.getLocation().longitude));
 
@@ -551,8 +664,17 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         users.add(user3);
         users.add(user4);
         users.add(user5);
-        userCircleHashMap = new HashMap<>();
-        updateNearbyUsers(users);
+
+        mockUsers.add(user1);
+        mockUsers.add(user2);
+        mockUsers.add(user3);
+        mockUsers.add(user4);
+        mockUsers.add(user5);
+
+        //userMarkerHashMap = new HashMap<>();
+        //userCircleHashMap = new HashMap<>();
+       // updateNearbyUsers(users);
+        addMarkers();
     }
 
     private double locationDistance(double lat1, double lon1, double lat2, double lon2) {
