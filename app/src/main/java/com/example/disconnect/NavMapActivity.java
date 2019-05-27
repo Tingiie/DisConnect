@@ -68,6 +68,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private final DBHandler dbHandler =  new DBHandler();
     private boolean hasPotentialMatch;
     private Marker currentMarker;
+    private UpdateInformationTimer timer;
 
     // User object representing user of current session
     private User mUser;
@@ -85,16 +86,20 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
         dbHandler.setmDb(mDb);
         dbHandler.setActivity(this);
-        Log.d(TAG, "Legolas" + "Current user id: " + FirebaseAuth.getInstance().getUid() + "mDb: " + mDb.toString());
+
         dbHandler.getUser();
-        dbHandler.getAllUsers();
+
+        UpdateInformationTimer timer = new UpdateInformationTimer(1000, 200);
+        timer.start();
+
+        statusOnline();
 
         locationListener = new MyLocationListener(this);
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         nearbyUsers = new ArrayList<>();
-        statusOffline();
         potentialMatch = new User();
         hasPotentialMatch = false;
+
 
 //        //---Test----------
 //        User testUser = new User();
@@ -114,38 +119,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         gpsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //onHandshake();
-
-                //Stuff to test DBHandler
-                //mUser.setHandshakeDetected(false);
-                //mUser.setActive(false);
-                //dbHandler.updateUser(mUser);
-                //Log.d(TAG, "Elrond " + mUser.getUser_id() + mUser.getEmail() + mUser.getTimestamp());
-                //Log.d(TAG, "Arwen " + allUsersList.toString());
-
-                //Test
-                //dbHandler.getAllUsers();
-                Log.d(TAG, "OnClick: allUsers: " + allUsersList);
-
-                User indiana = new User();
-                for (User u: allUsersList) {
-                    if (u.getUsername() == null) {
-                        return;
-                    }
-                    if (u.getUsername().equals("indiana")) {
-                        indiana = u;
-                    }
-                }
-
-                if (indiana.getUsername().equals("indiana")) {
-                    indiana.setActive(true);
-                    indiana.setHandshakeDetected(true);
-                    indiana.setPotentialMatch(mUser);
-                    indiana.setHandShakeTime(Calendar.getInstance().getTime());
-                    dbHandler.updateUser(indiana);
-                }
-                //
-
                 if (!mLocationPermissionGranted) {
                     getLocationPermission();
                     initMap();
@@ -154,18 +127,12 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 shareLocation = !shareLocation;
 
                 if (hasPermissionAndLocation()) {
-                    statusOnline();
                     if (shareLocation) {
+                        statusOnline();
                         Toast.makeText(NavMapActivity.this, "Your location is visible to other users", Toast.LENGTH_SHORT).show();
                         resetMap();
                         enableMapLocation(true);
                         shareLocation = true;
-                        mUser.setActive(true);
-                        try {
-                            mockUsers();
-                        } catch (Exception e) {
-                            Log.d(TAG, "OnButtonClick Error: " + e.getMessage());
-                        }
                     } else {
                         Toast.makeText(NavMapActivity.this, "Your location is hidden from other users", Toast.LENGTH_SHORT).show();
                         statusOffline();
@@ -173,7 +140,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                         enableMapLocation(false);
                         shareLocation = false;
                         hasPotentialMatch = false;
-                        mUser.setActive(false);
+                        //mUser.setActive(false);
                     }
                 } else {
                     statusOffline();
@@ -181,17 +148,21 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                     mMap.clear();
                     enableMapLocation(false);
                 }
-                dbHandler.updateUser(mUser);
-
             }
         });
         getLocationPermission();
         initMap();
+
     }
+
+
 
     //Menyraden
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        //TODO: add Info
+        //TODO: Remove profile
+        //TODO: Remove Settings
         switch (item.getItemId()) {
             case R.id.action_sign_out: {
                 signOut();
@@ -211,6 +182,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     }
 
     private void signOut() {
+        Log.d(TAG, "signOut: userId: " + mUser.getUser_id());
         if (mUser != null) {
             mUser.setActive(false);
             dbHandler.updateUser(mUser);
@@ -244,6 +216,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
         if (hasPermissionAndLocation()) {
             statusOnline();
+            Log.d(TAG, "onMapReady: hasPermissionAndLocation = true");
             setMapSettings();
             updateDeviceLocation();
             enableMapLocation(true);
@@ -251,6 +224,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             setCircle();
             centerMap(currentLatLng);
         } else {
+            Log.d(TAG, "onMapReady: hasPermissionAndLocation = false");
             statusOffline();
         }
     }
@@ -260,13 +234,16 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
         try {
             if (hasPermissionAndLocation()) {
-                statusOnline();
                 locationManager.requestLocationUpdates("gps",
                         2000,
                         0, locationListener);
                 currentLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                 currentLatLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+                if (mUser != null) {
+                    mUser.setLocation(currentLatLng);
+                }
                 centerMap(currentLatLng);
+                statusOnline();
                 return true;
             } else {
                 statusOffline();
@@ -373,9 +350,11 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     }
 
     private void statusOnline() {
+        Log.d(TAG, "statusOnline: entered");
         status = "Online";
         setTitle(status);
         if (mUser != null) {
+            Log.d(TAG, "statusOnline: user is not null. active is set to true");
             mUser.setActive(true);
             dbHandler.updateUser(mUser);
         }
@@ -448,8 +427,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
     }
 
-    public void updateNearbyUsers(ArrayList<User> allUsers) {
-        if (allUsers.isEmpty()) {
+    public void updateNearbyUsers() {
+        if (allUsersList.isEmpty()) {
             Log.d(TAG, "updateNearbyUsers: allUsers i null");
             return;
         }
@@ -469,17 +448,18 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
 
         nearbyUsers = new ArrayList<>();
-        for (User user : allUsers) {
+        for (User user : allUsersList) {
             LatLng otherLocation = user.getLocation();
             double distance =  locationDistance(currentLatLng.latitude, currentLatLng.longitude, otherLocation.latitude, otherLocation.longitude);
             Log.d(TAG, "Your location is: " + currentLatLng.latitude + " : " + currentLatLng.longitude);
             Log.d(TAG, user.getUsername() + "'s location is: " + otherLocation.latitude + " : " + user.getLocation().longitude);
             Log.d(TAG, "The distance to " + user.getUsername()+ " is: " + (distance));
 
-            if (user.isActive() && distance < RADIUS) {
+
+            if (!user.equals(mUser) && user.isActive() && distance < RADIUS) {
                 if (distance <= maxDistance) {
                     Log.d(TAG, "user's id: " + user.getUser_id());
-                    if (hasPotentialMatch && user.getUser_id().equals(potentialMatch.getUser_id())) {
+                    if (hasPotentialMatch && user.equals(potentialMatch)) {
                         createPotentialMarker(user);
                     } else {
                         nearbyUsers.add(user);
@@ -493,7 +473,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
         if (!nearbyUsers.isEmpty()) {
             statusNearbyUsers(nearbyUsers.size());
-        } else {
         }
 
         if (!nearbyUsers.isEmpty()) {
@@ -504,7 +483,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 Toast.makeText(NavMapActivity.this, nUsers + " users are nearby!", Toast.LENGTH_LONG).show();
             }
 
-            if (!(!oldListEmpty && nearbyUsers.isEmpty())) {
+            if (!(!oldListEmpty && nearbyUsers.isEmpty())) {    //if oldlist.isEmpty || !nearbyUsers.isEmpty
                 vibrate(500);
             }
         }
@@ -603,7 +582,23 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         users.add(user4);
         users.add(user5);
 
-        updateNearbyUsers(users);
+        //updateNearbyUsers(users);
+        updateNearbyUsers();
+    }
+
+    private void vibrate(long time) {
+        try {
+            Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+            // Vibrate for 500 milliseconds
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                v.vibrate(VibrationEffect.createOneShot(time, VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                //deprecated in API 26
+                v.vibrate(time);
+            }
+        } catch (Exception e) {
+            Log.d(TAG, "vibrate: error message " + e.getMessage());
+        }
     }
 
     private double locationDistance(double lat1, double lon1, double lat2, double lon2) {
@@ -630,7 +625,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     }
 
     public void onHandshake(){
-
         if(!hasPotentialMatch || !mUser.isActive()) {
             return;
         }
@@ -693,7 +687,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 //resetMatch
                 resetPotentialMatch();
                 mUser.setHandshakeDetected(false);
-                dbHandler.updateUser(mUser);
                 //updateUser
                 dbHandler.updateUser(mUser);
                 Toast.makeText(NavMapActivity.this, "Connecting people!!!!!!!!!", Toast.LENGTH_LONG).show();
@@ -716,18 +709,33 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
     }
 
-    private void vibrate(long time) {
-        try {
-            Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-            // Vibrate for 500 milliseconds
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                v.vibrate(VibrationEffect.createOneShot(time, VibrationEffect.DEFAULT_AMPLITUDE));
-            } else {
-                //deprecated in API 26
-                v.vibrate(time);
+    private class UpdateInformationTimer extends CountDownTimer {
+
+        public UpdateInformationTimer(long millisInFuture, long countDownInterval) {
+            super(millisInFuture, countDownInterval);
+        }
+
+        @Override
+        public void onTick(long millisUntilFinished) {
+
+        }
+
+        @Override
+        public void onFinish() {
+            try{
+                Log.d(TAG, "Timer: updating device location");
+                updateDeviceLocation();
+                Log.d(TAG, "Timer:  System update");
+                if (mUser != null) {
+                    Log.d(TAG, "Timer: update user");
+                    dbHandler.updateUser(mUser);
+                }
+                dbHandler.getAllUsers();
+                Log.d(TAG, "Timer: update all users");
+                start();
+            }catch(Exception e){
+                Log.e("Error", "Error: " + e.toString());
             }
-        } catch (Exception e) {
-            Log.d(TAG, "vibrate: error message " + e.getMessage());
         }
     }
 }
