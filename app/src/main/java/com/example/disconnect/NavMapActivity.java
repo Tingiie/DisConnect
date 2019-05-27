@@ -125,7 +125,25 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
                 //Test
                 //dbHandler.getAllUsers();
-                //Log.d(TAG, "allUsers: " + allUsersList);
+                Log.d(TAG, "OnClick: allUsers: " + allUsersList);
+
+                User indiana = new User();
+                for (User u: allUsersList) {
+                    if (u.getUsername() == null) {
+                        return;
+                    }
+                    if (u.getUsername().equals("indiana")) {
+                        indiana = u;
+                    }
+                }
+
+                if (indiana.getUsername().equals("indiana")) {
+                    indiana.setActive(true);
+                    indiana.setHandshakeDetected(true);
+                    indiana.setPotentialMatch(mUser);
+                    indiana.setHandShakeTime(Calendar.getInstance().getTime());
+                    dbHandler.updateUser(indiana);
+                }
                 //
 
                 if (!mLocationPermissionGranted) {
