@@ -185,8 +185,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     }
 
     private void signOut() {
-        //mUser.setActive(false);
-        // updateUser();
+        mUser.setActive(false);
+        dbHandler.updateUser(mUser);
         FirebaseAuth.getInstance().signOut();
         Intent intent = new Intent(this, LogInActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
