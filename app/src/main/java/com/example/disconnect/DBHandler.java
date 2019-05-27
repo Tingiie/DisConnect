@@ -1,12 +1,6 @@
 package com.example.disconnect;
 
-
-import android.Manifest;
-import android.app.Activity;
-import android.content.pm.PackageManager;
-import android.location.Location;
 import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
@@ -24,15 +18,12 @@ import java.util.ArrayList;
 import java.util.Date;
 
 public class DBHandler extends AppCompatActivity {
-
-
     private static final String TAG = "DBHandler";
     private FirebaseFirestore mDb;
     private User mUser;
     private ArrayList<User> allUsersList;
     private ArrayList<String> idList;
     private NavMapActivity activity;
-
 
     public void setmDb(FirebaseFirestore mDb) {
         this.mDb = mDb;
@@ -105,8 +96,6 @@ public class DBHandler extends AppCompatActivity {
                 }
             }
         });
-
-
     }
 
     public void getAllUsers() {
@@ -143,7 +132,6 @@ public class DBHandler extends AppCompatActivity {
                                     String email = task.getResult().getString("email");
                                     Date handshakeTime = task.getResult().getDate("handShakeTime");
 
-
                                     Boolean handshakeDetected = task.getResult().getBoolean("handshakeDetected");
 
                                     User potentialMatch = (User) task.getResult().get("potentialMatch");
@@ -153,7 +141,6 @@ public class DBHandler extends AppCompatActivity {
                                     GeoPoint geoPoint = task.getResult().getGeoPoint("geo_point");
                                     Date timestamp = task.getResult().getDate("timestamp");
 
-
                                     User user = new User(active, conncount, email, handshakeTime, handshakeDetected, potentialMatch, user_id, username, geoPoint, timestamp);
                                     allUsersList.add(user);
                                     Log.d(TAG, "Rövballe" + allUsersList.toString());
@@ -161,12 +148,9 @@ public class DBHandler extends AppCompatActivity {
                                     //    mUser = task.getResult().toObject(User.class);
                                     //                                  Log.d(TAG, "HEJHEJ" + task.getResult().toString());
 //                                    Log.d(TAG, "HEJHEJ " + " GEOPOINT " + /*+ task.getResult().getData().containsValue("edvinheterjag@edvin.se")  + */" LATIDUDE: " + task.getResult().getGeoPoint("geo_point").getLatitude() + " DATE: " + task.getResult().getDate("timestamp"));
-
-
                                 }
                             }
                         });
-
                     }
                     //Log.d(TAG, "BALLEDRÄNG" + idList.toString());
                 }
@@ -175,8 +159,5 @@ public class DBHandler extends AppCompatActivity {
 
 
         });
-
     }
-
-
 }

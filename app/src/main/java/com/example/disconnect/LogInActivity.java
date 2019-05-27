@@ -38,7 +38,6 @@ import static android.text.TextUtils.isEmpty;
 @IgnoreExtraProperties
 public class LogInActivity extends AppCompatActivity implements View.OnClickListener {
 
-
     private static final String TAG = "LoginActivity";
 
     //Firebase
@@ -56,8 +55,6 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
         setContentView(R.layout.activity_log_in);
 
         FirebaseApp.initializeApp(this);
-
-
         mAuth = FirebaseAuth.getInstance();
 
         mEmail = findViewById(R.id.email);
@@ -73,7 +70,6 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
 
     private void showDialog() {
         mProgressBar.setVisibility(View.VISIBLE);
-
     }
 
     private void hideDialog() {
@@ -121,41 +117,29 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
                                 // int conncount = 0;
                                 String email = task.getResult().getString("email");
                                 Date handshakeTime = task.getResult().getDate("handShakeTime");
-
-
                                 Boolean handshakeDetected = task.getResult().getBoolean("handshakeDetected");
-
                                 User potentialMatch = (User) task.getResult().get("potentialMatch");
-
                                 String user_id = task.getResult().getString("user_id");
                                 String username = task.getResult().getString("username");
                                 GeoPoint geoPoint = task.getResult().getGeoPoint("geo_point");
                                 Date timestamp = task.getResult().getDate("timestamp");
 
-
                                 User user = new User(active, conncount, email, handshakeTime, handshakeDetected, potentialMatch, user_id, username, geoPoint, timestamp);
-
-
                                 ((UserClient) (getApplicationContext())).setUser(user);
                             }
                         }
                     });
-
                     Intent intent = new Intent(LogInActivity.this, NavMapActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
                     finish();
-
                 } else {
                     // User is signed out
                     Log.d(TAG, "onAuthStateChanged:signed_out");
-
                 }
-                // ...
             }
         };
     }
-
 
     @Override
     public void onStart() {
@@ -170,7 +154,6 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
             FirebaseAuth.getInstance().removeAuthStateListener(mAuthListener);
         }
     }
-
 
     private void signIn() {
         //check if the fields are filled out

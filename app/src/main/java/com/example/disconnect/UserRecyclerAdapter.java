@@ -13,11 +13,9 @@ public class UserRecyclerAdapter extends RecyclerView.Adapter<UserRecyclerAdapte
 
     private ArrayList<User> mUsers = new ArrayList<>();
 
-
     public UserRecyclerAdapter(ArrayList<User> users) {
         this.mUsers = users;
     }
-
 
     @NonNull
     @Override
@@ -29,7 +27,6 @@ public class UserRecyclerAdapter extends RecyclerView.Adapter<UserRecyclerAdapte
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-
         ((ViewHolder)holder).username.setText(mUsers.get(position).getUsername());
         ((ViewHolder)holder).email.setText(mUsers.get(position).getEmail());
     }
@@ -39,8 +36,7 @@ public class UserRecyclerAdapter extends RecyclerView.Adapter<UserRecyclerAdapte
         return mUsers.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder
-    {
+    public class ViewHolder extends RecyclerView.ViewHolder {
         TextView username, email;
 
         public ViewHolder(View itemView) {
@@ -48,24 +44,5 @@ public class UserRecyclerAdapter extends RecyclerView.Adapter<UserRecyclerAdapte
             username = itemView.findViewById(R.id.username);
             email = itemView.findViewById(R.id.email);
         }
-
-
     }
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

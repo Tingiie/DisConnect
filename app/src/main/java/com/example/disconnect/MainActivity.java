@@ -45,7 +45,6 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<User> allUsersList;
     private ArrayList<String> idList;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -332,10 +331,7 @@ public class MainActivity extends AppCompatActivity {
   */
     public void startMapActivity(View view) {
         //testActivity
-
         Intent intent = new Intent(this, NavMapActivity.class);
-
-
         startActivity(intent);
     }
 }

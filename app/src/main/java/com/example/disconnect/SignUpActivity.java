@@ -31,11 +31,9 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
 
     private static final String TAG = "SignUpActivity";
 
-
     //widgets
     ProgressBar progressBar;
     EditText editTextEmail, editTextPassword, editConfirmPassword;
-
     private FirebaseAuth mAuth;
 
     //vars
@@ -55,15 +53,12 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
 
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
-
         findViewById(R.id.btn_register).setOnClickListener(this);
 
         FirebaseApp.initializeApp(this);
         mAuth = FirebaseAuth.getInstance();
         mDb = FirebaseFirestore.getInstance();
         hideSoftKeyboard();
-
-
     }
 
     private void registerUser(final String email, String password) {
@@ -88,7 +83,6 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
                             user.setHandShakeTime(null);
                             user.setPotentialMatch(null);
 
-
                             FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
                                     .setTimestampsInSnapshotsEnabled(true)
                                     .build();
@@ -111,14 +105,11 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
                                     }
                                 }
                             });
-
                         } else {
                             View parentLayout = findViewById(android.R.id.content);
                             Snackbar.make(parentLayout, "Password requires at least 6 characters.", Snackbar.LENGTH_SHORT).show();
                             hideDialog();
                         }
-
-                        // ...
                     }
                 });
     }
@@ -133,7 +124,6 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
         startActivity(intent);
         finish();
     }
-
 
     private void showDialog() {
         progressBar.setVisibility(View.VISIBLE);
@@ -167,9 +157,8 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
                         //Initiate registration task
                         registerUser(editTextEmail.getText().toString(), editTextPassword.getText().toString());
                     } else {
-                        Toast.makeText(SignUpActivity.this, "Passwords do not Match", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(SignUpActivity.this, "Passwords do not match", Toast.LENGTH_SHORT).show();
                     }
-
                 } else {
                     Toast.makeText(SignUpActivity.this, "You must fill out all the fields", Toast.LENGTH_SHORT).show();
                 }

@@ -89,7 +89,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         dbHandler.getUser();
         dbHandler.getAllUsers();
 
-        locationListener = new MyLocationListener(this, DEFAULT_ZOOM);
+        locationListener = new MyLocationListener(this);
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         nearbyUsers = new ArrayList<>();
         statusOffline();
