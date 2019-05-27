@@ -85,7 +85,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
         dbHandler.setmDb(mDb);
         dbHandler.setActivity(this);
-        //Log.d(TAG, "Legolas" + "Current user id: " + FirebaseAuth.getInstance().getUid() + "mDb: " + mDb.toString());
+        Log.d(TAG, "Legolas" + "Current user id: " + FirebaseAuth.getInstance().getUid() + "mDb: " + mDb.toString());
         dbHandler.getUser();
         dbHandler.getAllUsers();
 
@@ -96,18 +96,19 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         potentialMatch = new User();
         hasPotentialMatch = false;
 
-        //---Test----------
-        User testUser = new User();
-        testUser.setActive(true);
-        testUser.setEmail("hej123@hej.se");
-        testUser.setHandShakeTime(Calendar.getInstance().getTime());
-        testUser.setHandshakeDetected(true);
-        testUser.setPotentialMatch(mUser);
-        testUser.setTimestamp(Calendar.getInstance().getTime());
+//        //---Test----------
+//        User testUser = new User();
+//        testUser.setActive(true);
+//        testUser.setEmail("hej123@hej.se");
+//        testUser.setHandShakeTime(Calendar.getInstance().getTime());
+//        testUser.setHandshakeDetected(true);
+//        testUser.setPotentialMatch(mUser);
+//        testUser.setTimestamp(Calendar.getInstance().getTime());
+//
+//        potentialMatch = testUser;
+//        hasPotentialMatch = true;
+//        //------------------
 
-        potentialMatch = testUser;
-        hasPotentialMatch = true;
-        //------------------
 
         FloatingActionButton gpsButton = findViewById(R.id.gps_button);
         gpsButton.setOnClickListener(new View.OnClickListener() {
@@ -121,6 +122,11 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 //dbHandler.updateUser(mUser);
                 //Log.d(TAG, "Elrond " + mUser.getUser_id() + mUser.getEmail() + mUser.getTimestamp());
                 //Log.d(TAG, "Arwen " + allUsersList.toString());
+
+                //Test
+                //dbHandler.getAllUsers();
+                //Log.d(TAG, "allUsers: " + allUsersList);
+                //
 
                 if (!mLocationPermissionGranted) {
                     getLocationPermission();
@@ -157,6 +163,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                     mMap.clear();
                     enableMapLocation(false);
                 }
+                dbHandler.updateUser(mUser);
+
             }
         });
         getLocationPermission();
@@ -185,8 +193,10 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     }
 
     private void signOut() {
-        mUser.setActive(false);
-        dbHandler.updateUser(mUser);
+        if (mUser != null) {
+            mUser.setActive(false);
+            dbHandler.updateUser(mUser);
+        }
         FirebaseAuth.getInstance().signOut();
         Intent intent = new Intent(this, LogInActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -338,16 +348,28 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private void statusOffline() {
         status = "Offline";
         setTitle(status);
+        if (mUser != null) {
+            mUser.setActive(false);
+            dbHandler.updateUser(mUser);
+        }
     }
 
     private void statusOnline() {
         status = "Online";
         setTitle(status);
+        if (mUser != null) {
+            mUser.setActive(true);
+            dbHandler.updateUser(mUser);
+        }
     }
 
     private void statusNearbyUsers(int count) {
         status = "Nearby users: " + count;
         setTitle(status);
+        if (mUser != null) {
+            mUser.setActive(true);
+            dbHandler.updateUser(mUser);
+        }
     }
 
     private void statusAwaitingHandshake() {
@@ -372,7 +394,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             } else if (user.equals(potentialMatch)) {
                 Log.d(TAG, "updatePotentialMatch: Reset");
 
-                resetPotentialMatch(marker);
+                resetPotentialMatch();
                 if (!nearbyUsers.isEmpty()) {
                     statusNearbyUsers(nearbyUsers.size());
                 } else {
@@ -380,7 +402,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 }
             } else if (hasPotentialMatch && !user.getUser_id().equals(potentialMatch.getUser_id())) {
                 Log.d(TAG, "updatePotentialMatch: Reset and set");
-                resetPotentialMatch(marker);
+                resetPotentialMatch();
                 setPotentialMatch(marker);
                 statusAwaitingHandshake();
             }
@@ -397,8 +419,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         hasPotentialMatch = true;
     }
 
-    private void resetPotentialMatch(Marker marker) {
-
+    private void resetPotentialMatch() {
         if (currentMarker != null) {
             User user = (User) currentMarker.getTag();
             Log.d(TAG, "resetPotentialMatch: reset --> user's id: " + potentialMatch.getUser_id());
@@ -591,11 +612,11 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     }
 
     public void onHandshake(){
+
         if(!hasPotentialMatch || !mUser.isActive()) {
             return;
         }
         Log.d(TAG, "onHandshake: potentialMatch is not null and current user is active");
-
 
         try {
             User potentialMe = potentialMatch.getPotentialMatch();
@@ -644,17 +665,28 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
             if (potentialMe.equals(mUser) && potentialMatch.isActive() && potentialMatch.isHandshakeDetected() && handshakeTimeDiff < 10000) {
                 //back online or nearby users
-                //connect, new intent
+                if (nearbyUsers.isEmpty()) {
+                    statusOnline();
+                } else {
+                    statusNearbyUsers(nearbyUsers.size());
+                }
                 //counter++
+                mUser.incConnectionCounter();
                 //resetMatch
+                resetPotentialMatch();
+                mUser.setHandshakeDetected(false);
+                dbHandler.updateUser(mUser);
                 //updateUser
+                dbHandler.updateUser(mUser);
                 Toast.makeText(NavMapActivity.this, "Connecting people!!!!!!!!!", Toast.LENGTH_LONG).show();
+                //connect, new intent
             }
         }
 
         @Override
         public void onFinish() {
             //resetMatch
+            resetPotentialMatch();
             mUser.setHandshakeDetected(false);
             dbHandler.updateUser(mUser);
             //back online or nearby users
@@ -665,7 +697,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             }
         }
     }
-
 
     private void vibrate(long time) {
         try {

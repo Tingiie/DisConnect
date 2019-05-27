@@ -74,6 +74,7 @@ public class DBHandler extends AppCompatActivity {
                         mUser = new User(active, conncount, email, handshakeTime, handshakeDetected, potentialMatch, user_id, username, geoPoint, timestamp);
                         Log.d(TAG, "11. gimli" + mUser.getUser_id() + mUser.getEmail());
                         activity.setCurrentUser(mUser);
+                        Log.d(TAG, "Legolas" + "Current username: " + mUser.getUsername());
                     }
                 }
             });

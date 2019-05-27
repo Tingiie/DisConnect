@@ -1,17 +1,7 @@
 package com.example.disconnect;
 
-import android.location.Location;
 import android.os.Parcel;
 import android.os.Parcelable;
-
-
-//import com.google.android.gms.maps.model.LatLng;
-//
-//import java.util.Date;
-//
-//public class User implements Parcelable{
-
-import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.firestore.GeoPoint;
@@ -27,7 +17,6 @@ public class User implements Parcelable {
     private String user_id;
     private String username;
     private boolean active;
-    private LatLng location;
     private boolean handshakeDetected;
     private Date handShakeTime;
     private User potentialMatch;
@@ -196,6 +185,10 @@ public class User implements Parcelable {
 
     public int getConnectionCounter() {
         return connectionCounter;
+    }
+
+    public void setConnectionCounter(int counter) {
+        connectionCounter = counter;
     }
 
     public void incConnectionCounter() {
