@@ -107,6 +107,10 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         gpsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Log.d(TAG, "Gloin " + mUser.getUser_id());
+                mUser.setHandshakeDetected(true);
+                dbHandler.updateUser(mUser);
+
                 if (!mLocationPermissionGranted) {
                     getLocationPermission();
                     initMap();
@@ -276,8 +280,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         mapCircle = mMap.addCircle(new CircleOptions()
                 .center(currentLatLng)
                 .radius(RADIUS)
-                .strokeColor(Color.argb(150, 00, 100, 210))
-                .fillColor(Color.argb(50, 00, 100, 210)));
+                .strokeColor(Color.argb(150, 73, 95, 106))
+                .fillColor(Color.argb(50, 73, 95, 106)));
     }
 
     public void moveCircle(LatLng latLng) {
@@ -381,20 +385,20 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     }
 
     private void setPotentialMatch(String userId) {
+        Log.d(TAG, "setpotentialMatch: entered userId = " + userId);
+
         if (userId.equals("empty")) {
+            Log.d(TAG, "setpotentialMatch: entered empty");
             potentialMatchId = empty;
             mUser.setPotentialMatch(empty);
             hasPotentialMatch = false;
+            dbHandler.updateUser(mUser);
         } else {
-            for (User user : allUsersList) {
-                if (user.getUser_id().equals(userId)) {
-                    potentialMatchId = userId;
-                    mUser.setPotentialMatch(userId);
-                    hasPotentialMatch = true;
-                    dbHandler.updateUser(mUser);
-                    Log.d(TAG, "setPotentialMatch: potentialMatch = " + potentialMatchId);
-                }
-            }
+            Log.d(TAG, "setpotentialMatch: userId " + userId);
+            potentialMatchId = userId;
+            mUser.setPotentialMatch(userId);
+            hasPotentialMatch = true;
+            dbHandler.updateUser(mUser);
         }
     }
 
