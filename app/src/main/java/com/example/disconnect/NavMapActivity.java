@@ -107,8 +107,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         gpsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.d(TAG, "Gloin " + mUser.getUser_id());
-                mUser.setHandshakeDetected(true);
+
                 dbHandler.updateUser(mUser);
 
                 if (!mLocationPermissionGranted) {
@@ -618,74 +617,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         Log.d(TAG, "createPotentialMarker: tag: " + marker.getTag());
     }
 
-    private void mockUsers() {
-        ArrayList<User> users = new ArrayList<>();
-
-        //User user1 = new User("user1@example.com", "1", "user1", true);
-        User user1 = new User();
-        user1.setEmail("user1@example.com");
-        user1.setUser_id("1");
-        user1.setUsername("user1");
-        user1.setActive(true);
-
-        //User user2 = new User("user2@example.com", "2", "user2", true);
-        User user2 = new User();
-        user2.setEmail("user2@example.com");
-        user2.setUser_id("2");
-        user2.setUsername("user2");
-        user2.setActive(true);
-
-        //User user3
-        User user3 = new User();
-        user3.setEmail("user3@example.com");
-        user3.setUser_id("3");
-        user3.setUsername("user3");
-        user3.setActive(true);
-
-        //User user4
-        User user4 = new User();
-        user4.setEmail("user4@example.com");
-        user4.setUser_id("4");
-        user4.setUsername("user4");
-        user4.setActive(true);
-
-        //User user5
-        User user5 = new User();
-        user5.setEmail("user5@example.com");
-        user5.setUser_id("5");
-        user5.setUsername("user5");
-        user5.setActive(true);
-
-        LatLng l1 = new LatLng(55.711258, 13.208153);
-        user1.setLocation(l1);
-        Log.d(TAG, "mockUsers: user1's location is: " + (user1.getLocation().latitude) + " : " + (user1.getLocation().longitude));
-
-        LatLng l2 = new LatLng(55.711452, 13.209188);
-        user2.setLocation(l2);
-        Log.d(TAG, "mockUsers: user2's location is: " + (user2.getLocation().latitude) + " : " + (user2.getLocation().longitude));
-
-        LatLng l3 = new LatLng(55.711158, 13.208000);
-        user3.setLocation(l3);
-        Log.d(TAG, "mockUsers: user3's location is: " + (user3.getLocation().latitude) + " : " + (user3.getLocation().longitude));
-
-        LatLng l4 = new LatLng(55.711352, 13.209100);
-        user4.setLocation(l4);
-        Log.d(TAG, "mockUsers: user4's location is: " + (user4.getLocation().latitude) + " : " + (user4.getLocation().longitude));
-
-        LatLng l5 = new LatLng(55.711200, 13.208100);
-        user5.setLocation(l5);
-        Log.d(TAG, "mockUsers: user5's location is: " + (user5.getLocation().latitude) + " : " + (user5.getLocation().longitude));
-
-        users.add(user1);
-        users.add(user2);
-        users.add(user3);
-        users.add(user4);
-        users.add(user5);
-
-        //updateNearbyUsers(users);
-        //updateNearbyUsers();
-    }
-
     private void vibrate(long time) {
         try {
             Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
@@ -733,7 +664,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         try {
             String potentialMeId = potentialMatch.getPotentialMatch();
             if (mUser.getUser_id().equals(potentialMeId)) {
-                mUser.setHandshakeDetected(true);
+                vibrate(50);
+                //mUser.setHandshakeDetected(true);
                 mUser.setHandShakeTime(Calendar.getInstance().getTime());
                 dbHandler.updateUser(mUser);
 
@@ -765,6 +697,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         @Override
         public void onTick(long millisUntilFinished) {
             Log.d(TAG, "onTick: Handshake");
+            Toast.makeText(NavMapActivity.this, "Connecting people!!!!!!!!!", Toast.LENGTH_LONG).show();
+            vibrate(500);
 
             if (!hasPotentialMatch) {
                 resetStatus();
@@ -772,28 +706,36 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             }
 
             dbHandler.getAllUsers();
+
             for (User u : allUsersList) {
-                if(u.getUser_id().equals(potentialMatch.getUser_id())) {
+                Log.d(TAG, "onTick: Handshake user = " + u.getUser_id());
+                if(u.getUser_id().equals(potentialMatchId)) {
                     potentialMatch = u;
+                    Log.d(TAG, "onTick: Handshake potentialMatch = " + potentialMatch.getUser_id());
                 }
             }
 
             String potentialMeId = potentialMatch.getPotentialMatch();
-            long handshakeTimeDiff = Math.abs(potentialMatch.getHandShakeTime().getTime() - mUser.getHandShakeTime().getTime());
+            //long handshakeTimeDiff = Math.abs(potentialMatch.getHandShakeTime().getTime() - mUser.getHandShakeTime().getTime());
 
-            if (mUser.getUser_id().equals(potentialMeId) && potentialMatch.isActive() && potentialMatch.isHandshakeDetected() && handshakeTimeDiff < 10000) {
+            //if (mUser.getUser_id().equals(potentialMeId) && potentialMatch.isActive() && potentialMatch.isHandshakeDetected() && handshakeTimeDiff < 10000) {
+            if (mUser.getUser_id().equals(potentialMeId) && potentialMatch.isActive() && potentialMatch.isHandshakeDetected()) {
+                //Toast.makeText(NavMapActivity.this, "Connecting people!!!!!!!!!", Toast.LENGTH_LONG).show();
+                //vibrate(500);
+
                 //back online or nearby users
-                Log.d(TAG, "onTick handshake: resetStatus");
-                resetStatus();
-                //counter++
-                mUser.incConnectionCounter();
-                //resetMatch
-                resetPotentialMarker();
-                mUser.setHandshakeDetected(false);
-                //updateUser
-                dbHandler.updateUser(mUser);
-                Toast.makeText(NavMapActivity.this, "Connecting people!!!!!!!!!", Toast.LENGTH_LONG).show();
-                //connect, new intent
+              //  Log.d(TAG, "onTick handshake: resetStatus");
+//                resetStatus();
+//                //counter++
+//                mUser.incConnectionCounter();
+//                //resetMatch
+//                resetPotentialMarker();
+//                mUser.setHandshakeDetected(false);
+//                //updateUser
+//                dbHandler.updateUser(mUser);
+//                //Toast.makeText(NavMapActivity.this, "Connecting people!!!!!!!!!", Toast.LENGTH_LONG).show();
+//
+//                //connect, new intent
             }
         }
 
@@ -853,13 +795,16 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                     Log.d(TAG, "Timer: Clear and reset settings");
                     mMap.clear();
                     setMapSettings();
+
                 }
 
                 if (timerCounter == 1) {
                     potentialMatchId = empty;
                     mUser.setPotentialMatch(empty);
                     hasPotentialMatch = false;
+                    mUser.setHandshakeDetected(false);
                     dbHandler.updateUser(mUser);
+                    initMap();
                 }
 
                 if (hasPotentialMatch) {
