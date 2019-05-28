@@ -157,18 +157,12 @@ public class DBHandler extends AppCompatActivity {
                                     User user = new User(active, conncount, email, handshakeTime, handshakeDetected, potentialMatch, user_id, username, geoPoint, timestamp);
                                     allUsersList.add(user);
                                     Log.d(TAG, "Rövballe" + allUsersList.toString());
-                                    //Log.d(TAG, "Hästkuk: " + mUser.getUsername());
-                                    //    mUser = task.getResult().toObject(User.class);
-                                    //                                  Log.d(TAG, "HEJHEJ" + task.getResult().toString());
-//                                    Log.d(TAG, "HEJHEJ " + " GEOPOINT " + /*+ task.getResult().getData().containsValue("edvinheterjag@edvin.se")  + */" LATIDUDE: " + task.getResult().getGeoPoint("geo_point").getLatitude() + " DATE: " + task.getResult().getDate("timestamp"));
-
 
                                 }
                             }
                         });
 
                     }
-                    //Log.d(TAG, "BALLEDRÄNG" + idList.toString());
                 }
                 activity.setAllUsersList(allUsersList);
             }
@@ -177,6 +171,4 @@ public class DBHandler extends AppCompatActivity {
         });
 
     }
-
-
 }
