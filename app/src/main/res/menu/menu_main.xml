@@ -2,15 +2,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.example.disconnect.NavMapActivity">
-    <item
-        android:id="@+id/action_settings"
-        android:orderInCategory="100"
-        android:title="@string/action_settings"
-        app:showAsAction="never" />
 
     <item
-        android:id="@+id/action_profile"
-        android:title="@string/action_profile"
+        android:id="@+id/action_information_settings"
+        android:title="@string/action_information_settings"
         app:showAsAction="never" />
 
     <item

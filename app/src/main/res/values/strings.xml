@@ -50,5 +50,5 @@
     <string name="action_create_chatroom">Create Chatroom</string>
     <string name="action_leave_chatroom">Leave chatroom</string>
     <string name="action_chatroom_user_list">User list</string>
-    <string name="action_profile">Profile</string>
+    <string name="action_information_settings">Helpful info</string>
 </resources>

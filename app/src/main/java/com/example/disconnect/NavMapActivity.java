@@ -161,6 +161,10 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 signOut();
                 return true;
             }
+            case R.id.action_information_settings:{
+                startActivity(new Intent(this, activity_info1.class));
+                return true;
+            }
             default: {
                 return super.onOptionsItemSelected(item);
             }
