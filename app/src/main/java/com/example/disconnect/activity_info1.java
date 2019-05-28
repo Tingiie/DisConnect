@@ -11,7 +11,7 @@ public class activity_info1 extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_info1);
     }
-    public void openActivity3(View view) {
+    public void openActivity2(View view) {
         Intent intent = new Intent(this, Info2Activity.class);
         startActivity(intent);
     }

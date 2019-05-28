@@ -20,18 +20,17 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity android:name=".CustomPopActivity"></activity>
-        <activity android:name=".InfoActivity" />
+        <activity android:name=".InfoActivity" >
+            <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+
+        <category android:name="android.intent.category.LAUNCHER" />
+    </intent-filter>
+    </activity>
         <activity android:name=".activity_info1" />
         <activity android:name=".Info3Activity" />
         <activity android:name=".Info2Activity" />
-        <activity android:name=".Info1Activity" />
-        <activity android:name=".LogInActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+        <activity android:name=".LogInActivity"/>
         <activity android:name=".SignUpActivity" />
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.

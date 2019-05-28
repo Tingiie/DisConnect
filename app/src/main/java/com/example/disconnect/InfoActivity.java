@@ -15,7 +15,7 @@ public class InfoActivity extends AppCompatActivity {
         setContentView(R.layout.activity_info);
     }
 
-    public void openActivity2(View view) {
+    public void openActivitynext(View view) {
         Intent intent = new Intent(this, activity_info1.class);
         startActivity(intent);
         overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
