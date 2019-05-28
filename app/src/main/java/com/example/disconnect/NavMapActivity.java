@@ -38,10 +38,6 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
-
-
-import static com.google.common.collect.ComparisonChain.start;
 
 public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallback {
     private static final String TAG = "NavMapActivity";
@@ -65,10 +61,16 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private ArrayList<User> nearbyUsers;
     private String status;
     private User potentialMatch;
+    private String potentialMatchId;
+    private String empty = "empty";
     private final DBHandler dbHandler =  new DBHandler();
     private boolean hasPotentialMatch;
     private Marker currentMarker;
+    private String currentMarkerTag;
     private UpdateInformationTimer timer;
+    private boolean hasVibrated = false;
+    private int timerCounter;
+    private boolean markerLock = false;
 
     // User object representing user of current session
     private User mUser;
@@ -86,34 +88,20 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
         dbHandler.setmDb(mDb);
         dbHandler.setActivity(this);
-
         dbHandler.getUser();
 
-        UpdateInformationTimer timer = new UpdateInformationTimer(1000, 200);
+        UpdateInformationTimer timer = new UpdateInformationTimer(5000, 200);
         timer.start();
 
+        Log.d(TAG, "onCreate: status is set to online");
         statusOnline();
 
+        timerCounter = 0;
         locationListener = new MyLocationListener(this);
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         nearbyUsers = new ArrayList<>();
-        potentialMatch = new User();
+        potentialMatchId = empty;
         hasPotentialMatch = false;
-
-
-//        //---Test----------
-//        User testUser = new User();
-//        testUser.setActive(true);
-//        testUser.setEmail("hej123@hej.se");
-//        testUser.setHandShakeTime(Calendar.getInstance().getTime());
-//        testUser.setHandshakeDetected(true);
-//        testUser.setPotentialMatch(mUser);
-//        testUser.setTimestamp(Calendar.getInstance().getTime());
-//
-//        potentialMatch = testUser;
-//        hasPotentialMatch = true;
-//        //------------------
-
 
         FloatingActionButton gpsButton = findViewById(R.id.gps_button);
         gpsButton.setOnClickListener(new View.OnClickListener() {
@@ -128,6 +116,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
                 if (hasPermissionAndLocation()) {
                     if (shareLocation) {
+                        Log.d(TAG, "onClick: sharelocation = true, status is set to online");
                         statusOnline();
                         Toast.makeText(NavMapActivity.this, "Your location is visible to other users", Toast.LENGTH_SHORT).show();
                         resetMap();
@@ -139,7 +128,10 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                         mMap.clear();
                         enableMapLocation(false);
                         shareLocation = false;
+                        potentialMatchId = empty;
+                        mUser.setPotentialMatch(empty);
                         hasPotentialMatch = false;
+                        dbHandler.updateUser(mUser);
                         //mUser.setActive(false);
                     }
                 } else {
@@ -154,8 +146,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         initMap();
 
     }
-
-
 
     //Menyraden
     @Override
@@ -208,15 +198,17 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-                Log.d(TAG, "onMapReday: Arwen was here");
+                Log.d(TAG, "onMarkerClick: update potential match");
                 updatePotentialMatch(marker);
                 return true;
             }
         });
 
         if (hasPermissionAndLocation()) {
-            statusOnline();
             Log.d(TAG, "onMapReady: hasPermissionAndLocation = true");
+
+            Log.d(TAG, "onMapReady: status is set to online");
+            statusOnline();
             setMapSettings();
             updateDeviceLocation();
             enableMapLocation(true);
@@ -241,9 +233,12 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 currentLatLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
                 if (mUser != null) {
                     mUser.setLocation(currentLatLng);
+                    Log.d(TAG, "updateDevicelocation: mUser != null");
+                    centerMap(currentLatLng);
+                    Log.d(TAG, "updateDevicelocation: resetStatus");
+                    resetStatus();
+                    updateNearbyUsers();
                 }
-                centerMap(currentLatLng);
-                statusOnline();
                 return true;
             } else {
                 statusOffline();
@@ -341,10 +336,14 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     }
 
     private void statusOffline() {
+        Log.d(TAG, "statusOffline: entered");
         status = "Offline";
         setTitle(status);
         if (mUser != null) {
             mUser.setActive(false);
+            potentialMatchId = empty;
+            mUser.setPotentialMatch(empty);
+            hasPotentialMatch = false;
             dbHandler.updateUser(mUser);
         }
     }
@@ -361,6 +360,12 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     }
 
     private void statusNearbyUsers(int count) {
+        Log.d(TAG, "statusNearbyUsers: entered");
+        Log.d(TAG, "statusNearbyUsers hasPotentialMatch = " + hasPotentialMatch);
+        if (hasPotentialMatch) {
+            statusAwaitingHandshake();
+            return;
+        }
         status = "Nearby users: " + count;
         setTitle(status);
         if (mUser != null) {
@@ -370,65 +375,142 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     }
 
     private void statusAwaitingHandshake() {
+        Log.d(TAG, "statusAwaitingHandshake: entered");
         status = "Awaiting handshake";
         setTitle(status);
     }
 
-    private void updatePotentialMatch(Marker marker) {
-        User user = (User) marker.getTag();
-        if (nearbyUsers.isEmpty()) {
-            Log.d(TAG, "updatePotentialMatch: no nearby users");
-            return;
-        }
-
-        if (nearbyUsers.contains(user)) {
-            vibrate(50);
-            Log.d(TAG, "updatePotentialMatch: marker is nearby");
-            if (!hasPotentialMatch) {
-                Log.d(TAG, "updatePotentialMatch: Set");
-                setPotentialMatch(marker);
-                statusAwaitingHandshake();
-            } else if (user.equals(potentialMatch)) {
-                Log.d(TAG, "updatePotentialMatch: Reset");
-
-                resetPotentialMatch();
-                if (!nearbyUsers.isEmpty()) {
-                    statusNearbyUsers(nearbyUsers.size());
-                } else {
-                    statusOnline();
+    private void setPotentialMatch(String userId) {
+        if (userId.equals("empty")) {
+            potentialMatchId = empty;
+            mUser.setPotentialMatch(empty);
+            hasPotentialMatch = false;
+        } else {
+            for (User user : allUsersList) {
+                if (user.getUser_id().equals(userId)) {
+                    potentialMatchId = userId;
+                    mUser.setPotentialMatch(userId);
+                    hasPotentialMatch = true;
+                    dbHandler.updateUser(mUser);
+                    Log.d(TAG, "setPotentialMatch: potentialMatch = " + potentialMatch.getUser_id());
                 }
-            } else if (hasPotentialMatch && !user.getUser_id().equals(potentialMatch.getUser_id())) {
-                Log.d(TAG, "updatePotentialMatch: Reset and set");
-                resetPotentialMatch();
-                setPotentialMatch(marker);
-                statusAwaitingHandshake();
             }
         }
     }
 
-    private void setPotentialMatch(Marker marker) {
-        User user = (User) marker.getTag();
-        Log.d(TAG, "setPotentialMatch: user's id: " + user.getUser_id());
-        potentialMatch = user;
+    private void updatePotentialMatch(Marker marker) {
+        Log.d(TAG, "updatePotentialMatch: entered");
+       // String userId = (String) marker.getTag();
+        String markerId = (String) marker.getTag();
+
+        Log.d(TAG, "updatePotentialMatch: marker tag = " + markerId);
+
+        if (nearbyUsers.isEmpty()) {
+            Log.d(TAG, "updatePotentialMatch: no nearby users");
+            return;
+        }
+        markerLock = true;
+        if (potentialMatchId.equals(empty)) {
+            Log.d(TAG, "updatePotentialMarker: Scenario 1");
+            Log.d(TAG, "updatePotentialMatch: potentialMatch is empty");
+            currentMarker = marker;
+            currentMarkerTag = markerId;
+            currentMarker.setIcon(BitmapDescriptorFactory.fromResource(outlinedMarker));
+            setPotentialMatch(currentMarkerTag);
+            hasPotentialMatch = true;
+            statusAwaitingHandshake();
+            Log.d(TAG, "updatePotentialMarker: End of Scenario 1");
+        } else if (potentialMatchId.equals(markerId)) {
+            Log.d(TAG, "updatePotentialMarker: Scenario 2");
+            Log.d(TAG, "updatePotentialMatch: potentialMatch is currentMarker");
+            //currentMarker.setIcon(BitmapDescriptorFactory.fromResource(nearbyMarker));
+            currentMarker.remove();
+            User clickedUser = null;
+            for (User user : allUsersList) {
+                if (user.getUser_id().equals(markerId)) {
+                    clickedUser = user;
+                }
+            }
+
+            if (clickedUser != null) {
+                Log.d(TAG, "updatePotentialMarker: clickedUser is not null");
+                MarkerOptions opt = new MarkerOptions()
+                        .icon(BitmapDescriptorFactory.fromResource(nearbyMarker))
+                        .position(new LatLng(clickedUser.getLocation().latitude, clickedUser.getLocation().longitude));
+                Marker newMarker = mMap.addMarker(opt);
+                newMarker.setTag(clickedUser.getUser_id());
+                currentMarker = null;
+                currentMarkerTag = empty;
+                potentialMatchId = empty;
+                mUser.setPotentialMatch(empty);
+                hasPotentialMatch = false;
+            }
+            Log.d(TAG, "updatePotentialMarker: clickedUser is null");
+            Log.d(TAG, "updatePotentialMarker: End of Scenario 2");
+        } else {
+            Log.d(TAG, "updatePotentialMarker: Scenario 3");
+            Log.d(TAG, "updatePotentialMatch: potentialMatch is not null nor currentMarker");
+
+            User oldUser = null;
+            for (User user : allUsersList) {
+                if (user.getUser_id().equals(currentMarkerTag)) {
+                    oldUser = user;
+                }
+            }
+
+            if (oldUser != null && currentMarker != null) {
+                currentMarker.remove();
+                MarkerOptions opt = new MarkerOptions()
+                        .icon(BitmapDescriptorFactory.fromResource(nearbyMarker))
+                        .position(new LatLng(oldUser.getLocation().latitude, oldUser.getLocation().longitude));
+                Marker oldMarker = mMap.addMarker(opt);
+                oldMarker.setTag(oldUser.getUser_id());
+                currentMarkerTag = empty;
+
+                currentMarker = marker;
+                currentMarkerTag = markerId;
+                currentMarker.setIcon(BitmapDescriptorFactory.fromResource(outlinedMarker));
+                setPotentialMatch(currentMarkerTag);
+                potentialMatchId = currentMarkerTag;
+                hasPotentialMatch = true;
+                statusAwaitingHandshake();
+            }
+            Log.d(TAG, "updatePotentialMarker: End of Scenario 3");
+        }
+        Log.d(TAG, "updatePotentialMatch: updating mUser");
+        dbHandler.updateUser(mUser);
+
+        Log.d(TAG, "updatePotentialMatch: Clear and reset map");
+        resetMap();
+
+        markerLock = false;
+    }
+
+    private void setPotentialMarker(Marker marker) {
+        String userId = (String) marker.getTag();
+        Log.d(TAG, "setPotentialMarker: user's id: " + userId);
+        setPotentialMatch(userId);
         currentMarker = marker;
-        Log.d(TAG, "setPotentialMatch: marker = " + marker);
+        Log.d(TAG, "setPotentialMarker: marker = " + marker);
         marker.setIcon(BitmapDescriptorFactory.fromResource(outlinedMarker));
         hasPotentialMatch = true;
     }
 
-    private void resetPotentialMatch() {
+    private void resetPotentialMarker() {
         if (currentMarker != null) {
-            User user = (User) currentMarker.getTag();
-            Log.d(TAG, "resetPotentialMatch: reset --> user's id: " + potentialMatch.getUser_id());
-            Log.d(TAG, "resetPotentialMatch: reset --> marker's id: " + user.getUser_id());
+            String userId = (String) currentMarker.getTag();
+            Log.d(TAG, "resetPotentialMarker: reset --> user's id: " + potentialMatchId);
+            Log.d(TAG, "resetPotentialMarker: reset --> marker's id: " + userId);
             currentMarker.setIcon(BitmapDescriptorFactory.fromResource(nearbyMarker));
             currentMarker = null;
+            potentialMatchId = empty;
+            setPotentialMatch(empty);
             hasPotentialMatch = false;
         }
     }
 
     public void updateNearbyUsers() {
-        if (allUsersList.isEmpty()) {
+        if (allUsersList == null || allUsersList.isEmpty()) {
             Log.d(TAG, "updateNearbyUsers: allUsers i null");
             return;
         }
@@ -455,18 +537,26 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             Log.d(TAG, user.getUsername() + "'s location is: " + otherLocation.latitude + " : " + user.getLocation().longitude);
             Log.d(TAG, "The distance to " + user.getUsername()+ " is: " + (distance));
 
-
-            if (!user.equals(mUser) && user.isActive() && distance < RADIUS) {
-                if (distance <= maxDistance) {
-                    Log.d(TAG, "user's id: " + user.getUser_id());
-                    if (hasPotentialMatch && user.equals(potentialMatch)) {
-                        createPotentialMarker(user);
+            if (!user.getUser_id().equals(mUser.getUser_id())) {
+                Log.d(TAG, "updateNearbyUsers: user != current user");
+                if (user.isActive() && distance < RADIUS) {
+                    Log.d(TAG, "updateNearbyUsers: user is active and within distance");
+                    if (distance <= maxDistance) {
+                        Log.d(TAG, "updateNearbyUsers: user is nearby! user's id: " + user.getUser_id());
+                        if (hasPotentialMatch && user.getUser_id().equals(potentialMatchId)) {
+                            nearbyUsers.add(user);
+                            Log.d(TAG, "updateNearbyUsers: potential nearbyUser is added " + user.getUser_id());
+                            Log.d(TAG, "updateNearbyUsers: total nearbyUsers = " + nearbyUsers.size());
+                            createPotentialMarker(user);
+                        } else {
+                            nearbyUsers.add(user);
+                            Log.d(TAG, "updateNearbyUsers: nearbyUser is added " + user.getUser_id());
+                            Log.d(TAG, "updateNearbyUsers: total nearbyUsers = " + nearbyUsers.size());
+                            createNearbyMarker(user);
+                        }
                     } else {
-                        nearbyUsers.add(user);
-                        createNearbyMarker(user);
+                        createDistantMarker(user);
                     }
-                } else {
-                    createDistantMarker(user);
                 }
             }
         }
@@ -476,16 +566,18 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
 
         if (!nearbyUsers.isEmpty()) {
-            int nUsers = nearbyUsers.size();
-            if (nUsers == 1) {
-                Toast.makeText(NavMapActivity.this, "A user is nearby!", Toast.LENGTH_LONG).show();
-            } else if (nUsers > 1) {
-                Toast.makeText(NavMapActivity.this, nUsers + " users are nearby!", Toast.LENGTH_LONG).show();
-            }
-
-            if (!(!oldListEmpty && nearbyUsers.isEmpty())) {    //if oldlist.isEmpty || !nearbyUsers.isEmpty
+            if ((oldListEmpty || !nearbyUsers.isEmpty()) && !hasVibrated) {    //if oldlist.isEmpty || !nearbyUsers.isEmpty
+                int nUsers = nearbyUsers.size();
+                if (nUsers == 1) {
+                    Toast.makeText(NavMapActivity.this, "A user is nearby!", Toast.LENGTH_LONG).show();
+                } else if (nUsers > 1) {
+                    Toast.makeText(NavMapActivity.this, nUsers + " users are nearby!", Toast.LENGTH_LONG).show();
+                }
                 vibrate(500);
+                hasVibrated = true;
             }
+        } else {
+            hasVibrated = false;
         }
     }
 
@@ -494,7 +586,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 .icon(BitmapDescriptorFactory.fromResource(nearbyMarker))
                 .position(new LatLng(user.getLocation().latitude, user.getLocation().longitude));
         Marker marker = mMap.addMarker(opt);
-        marker.setTag(user);
+        marker.setTag(user.getUser_id());
         Log.d(TAG, "createNearbyMarker: tag: " + marker.getTag());
     }
 
@@ -504,7 +596,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 .position(new LatLng(user.getLocation().latitude, user.getLocation().longitude));
 
         Marker marker = mMap.addMarker(opt);
-        marker.setTag(user);
+        marker.setTag(user.getUser_id());
         Log.d(TAG, "createDistantMarker: tag: " + marker.getTag());
     }
 
@@ -514,7 +606,11 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 .position(new LatLng(user.getLocation().latitude, user.getLocation().longitude));
 
         Marker marker = mMap.addMarker(opt);
-        marker.setTag(user);
+
+        marker.setTag(user.getUser_id());
+        potentialMatchId = user.getUser_id();
+        mUser.setPotentialMatch(potentialMatchId);
+        hasPotentialMatch = true;
         Log.d(TAG, "createPotentialMarker: tag: " + marker.getTag());
     }
 
@@ -583,7 +679,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         users.add(user5);
 
         //updateNearbyUsers(users);
-        updateNearbyUsers();
+        //updateNearbyUsers();
     }
 
     private void vibrate(long time) {
@@ -631,8 +727,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         Log.d(TAG, "onHandshake: potentialMatch is not null and current user is active");
 
         try {
-            User potentialMe = potentialMatch.getPotentialMatch();
-            if (potentialMe.equals(mUser)) {
+            String potentialMeId = potentialMatch.getPotentialMatch();
+            if (mUser.getUser_id().equals(potentialMeId)) {
                 mUser.setHandshakeDetected(true);
                 mUser.setHandShakeTime(Calendar.getInstance().getTime());
                 dbHandler.updateUser(mUser);
@@ -646,6 +742,16 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
     }
 
+    private void resetStatus() {
+        Log.d(TAG, "resetStatus: entered");
+        if (nearbyUsers.isEmpty()) {
+            statusOnline();
+        } else if (hasPotentialMatch) {
+            statusAwaitingHandshake();
+        } else {
+            statusNearbyUsers(nearbyUsers.size());
+        }
+    }
 
     private class HandshakeTimer extends CountDownTimer {
         public HandshakeTimer(long millisInFuture, long countDownInterval) {
@@ -654,38 +760,31 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
         @Override
         public void onTick(long millisUntilFinished) {
-            Log.d(TAG, "onTick: ");
+            Log.d(TAG, "onTick: Handshake");
 
             if (!hasPotentialMatch) {
-                if (nearbyUsers.isEmpty()) {
-                    statusOnline();
-                } else {
-                    statusNearbyUsers(nearbyUsers.size());
-                }
+                resetStatus();
                 return;
             }
 
             dbHandler.getAllUsers();
             for (User u : allUsersList) {
-                if(u.equals(potentialMatch)) {
+                if(u.getUser_id().equals(potentialMatch.getUser_id())) {
                     potentialMatch = u;
                 }
             }
 
-            User potentialMe = potentialMatch.getPotentialMatch();
+            String potentialMeId = potentialMatch.getPotentialMatch();
             long handshakeTimeDiff = Math.abs(potentialMatch.getHandShakeTime().getTime() - mUser.getHandShakeTime().getTime());
 
-            if (potentialMe.equals(mUser) && potentialMatch.isActive() && potentialMatch.isHandshakeDetected() && handshakeTimeDiff < 10000) {
+            if (mUser.getUser_id().equals(potentialMeId) && potentialMatch.isActive() && potentialMatch.isHandshakeDetected() && handshakeTimeDiff < 10000) {
                 //back online or nearby users
-                if (nearbyUsers.isEmpty()) {
-                    statusOnline();
-                } else {
-                    statusNearbyUsers(nearbyUsers.size());
-                }
+                Log.d(TAG, "onTick handshake: resetStatus");
+                resetStatus();
                 //counter++
                 mUser.incConnectionCounter();
                 //resetMatch
-                resetPotentialMatch();
+                resetPotentialMarker();
                 mUser.setHandshakeDetected(false);
                 //updateUser
                 dbHandler.updateUser(mUser);
@@ -697,15 +796,12 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         @Override
         public void onFinish() {
             //resetMatch
-            resetPotentialMatch();
+            resetPotentialMarker();
             mUser.setHandshakeDetected(false);
             dbHandler.updateUser(mUser);
             //back online or nearby users
-            if (nearbyUsers.isEmpty()) {
-                statusOnline();
-            } else {
-                statusNearbyUsers(nearbyUsers.size());
-            }
+            Log.d(TAG, "onFinish: reset");
+            resetStatus();
         }
     }
 
@@ -723,15 +819,48 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         @Override
         public void onFinish() {
             try{
-                Log.d(TAG, "Timer: updating device location");
-                updateDeviceLocation();
                 Log.d(TAG, "Timer:  System update");
+
                 if (mUser != null) {
+                    timerCounter++;
+                    Log.d(TAG, "onFinish timerCounter = " + timerCounter);
+                }
+
+                if (markerLock) {
+                    start();
+                    return;
+                }
+
+                if (mUser != null && mUser.isActive()) {
+                    Log.d(TAG, "Timer: Clear and reset map");
+                    resetMap();
+
+                    Log.d(TAG, "Timer: updating device location");
+                    updateDeviceLocation();
+
                     Log.d(TAG, "Timer: update user");
                     dbHandler.updateUser(mUser);
+
+                    Log.d(TAG, "Timer: update all users");
+                    dbHandler.getAllUsers();
+                } else if (mUser != null) {
+                    Log.d(TAG, "Timer: update user");
+                    dbHandler.updateUser(mUser);
+                    Log.d(TAG, "Timer: Clear and reset settings");
+                    mMap.clear();
+                    setMapSettings();
                 }
-                dbHandler.getAllUsers();
-                Log.d(TAG, "Timer: update all users");
+
+                if (timerCounter == 1) {
+                    potentialMatchId = empty;
+                    mUser.setPotentialMatch(empty);
+                    hasPotentialMatch = false;
+                    dbHandler.updateUser(mUser);
+                }
+
+                if (hasPotentialMatch) {
+                    statusAwaitingHandshake();
+                }
                 start();
             }catch(Exception e){
                 Log.e("Error", "Error: " + e.toString());

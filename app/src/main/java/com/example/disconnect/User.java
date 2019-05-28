@@ -19,7 +19,7 @@ public class User implements Parcelable {
     private boolean active;
     private boolean handshakeDetected;
     private Date handShakeTime;
-    private User potentialMatch;
+    private String potentialMatch;
     private int connectionCounter;
     private GeoPoint geo_point = new GeoPoint(1.0, 2.0);
     private @ServerTimestamp Date timestamp;
@@ -30,7 +30,7 @@ public class User implements Parcelable {
 
     //  private String avatar;
 
-    public User(boolean active, int connectionCounter, String email, Date handShakeTime, boolean handshakeDetected, User potentialMatch, String user_id, String username, GeoPoint geo_point, Date timestamp) {
+    public User(boolean active, int connectionCounter, String email, Date handShakeTime, boolean handshakeDetected, String potentialMatch, String user_id, String username, GeoPoint geo_point, Date timestamp) {
         this.user_id = user_id;
         this.active = active;
         this.connectionCounter = connectionCounter;
@@ -175,11 +175,11 @@ public class User implements Parcelable {
         this.handShakeTime = handShakeTime;
     }
 
-    public User getPotentialMatch() {
+    public String getPotentialMatch() {
         return potentialMatch;
     }
 
-    public void setPotentialMatch(User potentialMatch) {
+    public void setPotentialMatch(String potentialMatch) {
         this.potentialMatch = potentialMatch;
     }
 

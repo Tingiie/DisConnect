@@ -25,7 +25,7 @@ public class MyLocationListener extends AppCompatActivity implements LocationLis
         latitude = location.getLatitude();
         longitude = location.getLongitude();
         latlng = new LatLng(latitude, longitude);
-        mapActivity.updateDeviceLocation();
+        //mapActivity.updateDeviceLocation();
         mapActivity.centerMap(latlng);
 
     }

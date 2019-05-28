@@ -118,7 +118,7 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
                                 String email = task.getResult().getString("email");
                                 Date handshakeTime = task.getResult().getDate("handShakeTime");
                                 Boolean handshakeDetected = task.getResult().getBoolean("handshakeDetected");
-                                User potentialMatch = (User) task.getResult().get("potentialMatch");
+                                String potentialMatch = task.getResult().getString("potentialMatch");
                                 String user_id = task.getResult().getString("user_id");
                                 String username = task.getResult().getString("username");
                                 GeoPoint geoPoint = task.getResult().getGeoPoint("geo_point");

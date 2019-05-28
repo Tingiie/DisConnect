@@ -61,8 +61,9 @@ public class DBHandler extends AppCompatActivity {
                         //Log.d(TAG, "getUser: date: " + handshakeTime.toString());  is null
                         Boolean handshakeDetected = task.getResult().getBoolean("handshakeDetected");
                         Log.d(TAG, "6. getUser: handshakeDetected: " + handshakeDetected);
-                        User potentialMatch = (User) task.getResult().get("potentialMatch");
-                        //Log.d(TAG, "getUser: potentialMatch: " + potentialMatch.getUsername()); is null
+                        String potentialMatch = task.getResult().getString("potentialMatch");
+//                        User potentialMatch = (User) task.getResult().get("potentialMatch");
+//                        //Log.d(TAG, "getUser: potentialMatch: " + potentialMatch.getUsername()); is null
                         String user_id = task.getResult().getString("user_id");
                         Log.d(TAG, "7. getUser: user_id: " + user_id);
                         String username = task.getResult().getString("username");
@@ -135,7 +136,7 @@ public class DBHandler extends AppCompatActivity {
 
                                     Boolean handshakeDetected = task.getResult().getBoolean("handshakeDetected");
 
-                                    User potentialMatch = (User) task.getResult().get("potentialMatch");
+                                    String potentialMatch = task.getResult().getString("potentialMatch");
 
                                     String user_id = task.getResult().getString("user_id");
                                     String username = task.getResult().getString("username");
