@@ -656,6 +656,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     }
 
     public void onHandshake(){
+        Log.d(TAG, "onHandshake: hasPotentialMatch = " + hasPotentialMatch);
+        //TODO update potenialMatch user object
         if(!hasPotentialMatch || !mUser.isActive()) {
             return;
         }
@@ -665,7 +667,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             String potentialMeId = potentialMatch.getPotentialMatch();
             if (mUser.getUser_id().equals(potentialMeId)) {
                 vibrate(50);
-                //mUser.setHandshakeDetected(true);
+                mUser.setHandshakeDetected(true);
                 mUser.setHandShakeTime(Calendar.getInstance().getTime());
                 dbHandler.updateUser(mUser);
 
@@ -697,8 +699,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         @Override
         public void onTick(long millisUntilFinished) {
             Log.d(TAG, "onTick: Handshake");
-            Toast.makeText(NavMapActivity.this, "Connecting people!!!!!!!!!", Toast.LENGTH_LONG).show();
-            vibrate(500);
 
             if (!hasPotentialMatch) {
                 resetStatus();
@@ -720,8 +720,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
             //if (mUser.getUser_id().equals(potentialMeId) && potentialMatch.isActive() && potentialMatch.isHandshakeDetected() && handshakeTimeDiff < 10000) {
             if (mUser.getUser_id().equals(potentialMeId) && potentialMatch.isActive() && potentialMatch.isHandshakeDetected()) {
-                //Toast.makeText(NavMapActivity.this, "Connecting people!!!!!!!!!", Toast.LENGTH_LONG).show();
-                //vibrate(500);
+                Toast.makeText(NavMapActivity.this, "Connecting people!!!!!!!!!", Toast.LENGTH_LONG).show();
+                vibrate(500);
 
                 //back online or nearby users
               //  Log.d(TAG, "onTick handshake: resetStatus");
@@ -744,7 +744,11 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             //resetMatch
             resetPotentialMarker();
             mUser.setHandshakeDetected(false);
+            hasPotentialMatch = false;
+            potentialMatchId = empty;
+            mUser.setPotentialMatch(empty);
             dbHandler.updateUser(mUser);
+
             //back online or nearby users
             Log.d(TAG, "onFinish: reset");
             resetStatus();
