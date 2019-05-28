@@ -392,7 +392,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                     mUser.setPotentialMatch(userId);
                     hasPotentialMatch = true;
                     dbHandler.updateUser(mUser);
-                    Log.d(TAG, "setPotentialMatch: potentialMatch = " + potentialMatch.getUser_id());
+                    Log.d(TAG, "setPotentialMatch: potentialMatch = " + potentialMatchId);
                 }
             }
         }
