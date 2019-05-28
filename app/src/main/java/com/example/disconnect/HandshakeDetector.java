@@ -11,7 +11,7 @@ public class HandshakeDetector implements ShakeDetector.ShakeListener {
     public HandshakeDetector(NavMapActivity activity){
         this.activity = activity;
         Sensey.getInstance().init(activity);
-        Sensey.getInstance().startShakeDetection(10f, 2000,this);
+        Sensey.getInstance().startShakeDetection(10f, 10,this);
     }
 
     @Override
@@ -22,6 +22,5 @@ public class HandshakeDetector implements ShakeDetector.ShakeListener {
 
     @Override
     public void onShakeStopped() {
-
     }
 }

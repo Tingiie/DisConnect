@@ -593,17 +593,24 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
     }
 
+
     public void showPopup() {
         TextView txtclose;
         Button btn;
         myDialog.setContentView(R.layout.activity_custom_pop);
         txtclose =(TextView) myDialog.findViewById(R.id.txtclose);
         txtclose.setText("X");
-        btn = (Button) myDialog.findViewById(R.id.btn);
         txtclose.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 myDialog.dismiss();
+                mUser.setHandshakeDetected(false);
+                hasPotentialMatch = false;
+                potentialMatchId = empty;
+                mUser.setPotentialMatch(empty);
+                dbHandler.updateUser(mUser);
+                resetMap();
+                resetStatus();
             }
         });
         myDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
@@ -687,8 +694,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         Log.d(TAG, "onHandshake: hasPotentialMatch = " + hasPotentialMatch);
         //TODO update potenialMatch user object
         if(!hasPotentialMatch || !mUser.isActive()) {
-            Toast.makeText(NavMapActivity.this, "nopotentialmatch", Toast.LENGTH_LONG).show();
-
+            //Toast.makeText(NavMapActivity.this, "nopotentialmatch", Toast.LENGTH_LONG).show();
             return;
         }
         Log.d(TAG, "onHandshake: potentialMatch is not null and current user is active");
@@ -702,19 +708,19 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 }
             }
             String potentialMeId = potentialMatch.getPotentialMatch();
-            Toast.makeText(NavMapActivity.this, "Vad heter melon på engelska?" + potentialMatch.getUser_id() , Toast.LENGTH_LONG).show();
+            //Toast.makeText(NavMapActivity.this, "Vad heter melon på engelska?" + potentialMatch.getUser_id() , Toast.LENGTH_LONG).show();
 
             if (mUser.getUser_id().equals(potentialMeId)) {
-                vibrate(50);
+                //vibrate(50);
                 mUser.setHandshakeDetected(true);
                 mUser.setHandShakeTime(Calendar.getInstance().getTime());
                 dbHandler.updateUser(mUser);
 
-                HandshakeTimer h = new HandshakeTimer(2000, 200);
+                HandshakeTimer h = new HandshakeTimer(5000, 1000);
                 h.start();
             }
         } catch(Exception e) {
-            Toast.makeText(NavMapActivity.this, "Catch", Toast.LENGTH_LONG).show();
+            //Toast.makeText(NavMapActivity.this, "Catch", Toast.LENGTH_LONG).show();
 
             Log.d(TAG, "onHandshake: potentialMatch's something is null");
             return;
@@ -739,7 +745,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
         @Override
         public void onTick(long millisUntilFinished) {
-            Toast.makeText(NavMapActivity.this, "Tick", Toast.LENGTH_LONG).show();
+            //Toast.makeText(NavMapActivity.this, "Tick", Toast.LENGTH_LONG).show();
 
             Log.d(TAG, "onTick: Handshake");
 
@@ -763,9 +769,13 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
             //if (mUser.getUser_id().equals(potentialMeId) && potentialMatch.isActive() && potentialMatch.isHandshakeDetected() && handshakeTimeDiff < 10000) {
             if (mUser.getUser_id().equals(potentialMeId) && potentialMatch.isActive() && potentialMatch.isHandshakeDetected()) {
-                Toast.makeText(NavMapActivity.this, "Connecting people!!!!!!!!!", Toast.LENGTH_LONG).show();
+                //Toast.makeText(NavMapActivity.this, "Connecting people!!!!!!!!!", Toast.LENGTH_LONG).show();
                 vibrate(500);
                 showPopup();
+
+                mUser.incConnectionCounter();
+                //this.onFinish();
+
 
 
                 //back online or nearby users
@@ -787,16 +797,18 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         @Override
         public void onFinish() {
             //resetMatch
-            resetPotentialMarker();
+            //mUser.setHandshakeDetected(false);
+            //resetPotentialMarker();
+            //back online or nearby users
             mUser.setHandshakeDetected(false);
             hasPotentialMatch = false;
             potentialMatchId = empty;
             mUser.setPotentialMatch(empty);
             dbHandler.updateUser(mUser);
-
-            //back online or nearby users
-            Log.d(TAG, "onFinish: reset");
+            resetMap();
             resetStatus();
+
+            Log.d(TAG, "onFinish: reset");
         }
     }
 
