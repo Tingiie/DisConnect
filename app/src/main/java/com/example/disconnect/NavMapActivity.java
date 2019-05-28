@@ -21,6 +21,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -35,6 +37,10 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import android.app.Dialog;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -71,6 +77,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private boolean hasVibrated = false;
     private int timerCounter;
     private boolean markerLock = false;
+    private Dialog myDialog;
 
     // User object representing user of current session
     private User mUser;
@@ -89,6 +96,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         dbHandler.setmDb(mDb);
         dbHandler.setActivity(this);
         dbHandler.getUser();
+
+        myDialog = new Dialog(this);
 
         UpdateInformationTimer timer = new UpdateInformationTimer(5000, 200);
         timer.start();
@@ -584,6 +593,23 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
     }
 
+    public void showPopup() {
+        TextView txtclose;
+        Button btn;
+        myDialog.setContentView(R.layout.activity_custom_pop);
+        txtclose =(TextView) myDialog.findViewById(R.id.txtclose);
+        txtclose.setText("X");
+        btn = (Button) myDialog.findViewById(R.id.btn);
+        txtclose.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                myDialog.dismiss();
+            }
+        });
+        myDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        myDialog.show();
+    }
+
     public void createNearbyMarker(User user) {
         MarkerOptions opt = new MarkerOptions()
                 .icon(BitmapDescriptorFactory.fromResource(nearbyMarker))
@@ -739,6 +765,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             if (mUser.getUser_id().equals(potentialMeId) && potentialMatch.isActive() && potentialMatch.isHandshakeDetected()) {
                 Toast.makeText(NavMapActivity.this, "Connecting people!!!!!!!!!", Toast.LENGTH_LONG).show();
                 vibrate(500);
+                showPopup();
+
 
                 //back online or nearby users
               //  Log.d(TAG, "onTick handshake: resetStatus");
