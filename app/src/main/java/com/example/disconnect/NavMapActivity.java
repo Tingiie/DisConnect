@@ -1,4 +1,5 @@
 package com.example.disconnect;
+
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
@@ -69,7 +70,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private User potentialMatch;
     private String potentialMatchId;
     private String empty = "empty";
-    private final DBHandler dbHandler =  new DBHandler();
+    private final DBHandler dbHandler = new DBHandler();
     private boolean hasPotentialMatch;
     private Marker currentMarker;
     private String currentMarkerTag;
@@ -412,7 +413,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
     private void updatePotentialMatch(Marker marker) {
         Log.d(TAG, "updatePotentialMatch: entered");
-       // String userId = (String) marker.getTag();
+        // String userId = (String) marker.getTag();
         String markerId = (String) marker.getTag();
 
         Log.d(TAG, "updatePotentialMatch: marker tag = " + markerId);
@@ -544,10 +545,10 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         nearbyUsers = new ArrayList<>();
         for (User user : allUsersList) {
             LatLng otherLocation = user.getLocation();
-            double distance =  locationDistance(currentLatLng.latitude, currentLatLng.longitude, otherLocation.latitude, otherLocation.longitude);
+            double distance = locationDistance(currentLatLng.latitude, currentLatLng.longitude, otherLocation.latitude, otherLocation.longitude);
             Log.d(TAG, "Your location is: " + currentLatLng.latitude + " : " + currentLatLng.longitude);
             Log.d(TAG, user.getUsername() + "'s location is: " + otherLocation.latitude + " : " + user.getLocation().longitude);
-            Log.d(TAG, "The distance to " + user.getUsername()+ " is: " + (distance));
+            Log.d(TAG, "The distance to " + user.getUsername() + " is: " + (distance));
 
             if (!user.getUser_id().equals(mUser.getUser_id())) {
                 Log.d(TAG, "updateNearbyUsers: user != current user");
@@ -598,7 +599,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         TextView txtclose;
         Button btn;
         myDialog.setContentView(R.layout.activity_custom_pop);
-        txtclose =(TextView) myDialog.findViewById(R.id.txtclose);
+        txtclose = (TextView) myDialog.findViewById(R.id.txtclose);
         txtclose.setText("X");
         txtclose.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -680,20 +681,20 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
     }
 
-    public void setCurrentUser(User user){
+    public void setCurrentUser(User user) {
         this.mUser = user;
     }
 
-    public void setAllUsersList(ArrayList<User> allUsersList){
+    public void setAllUsersList(ArrayList<User> allUsersList) {
         this.allUsersList = allUsersList;
     }
 
-    public void onHandshake(){
+    public void onHandshake() {
         //Toast.makeText(NavMapActivity.this, "Vad heter melon på engelska?", Toast.LENGTH_LONG).show();
 
         Log.d(TAG, "onHandshake: hasPotentialMatch = " + hasPotentialMatch);
         //TODO update potenialMatch user object
-        if(!hasPotentialMatch || !mUser.isActive()) {
+        if (!hasPotentialMatch || !mUser.isActive()) {
             //Toast.makeText(NavMapActivity.this, "nopotentialmatch", Toast.LENGTH_LONG).show();
             return;
         }
@@ -702,8 +703,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         try {
 
             //Toast.makeText(NavMapActivity.this, "try", Toast.LENGTH_LONG).show();
-            for(User user : allUsersList){
-                if(user.getUser_id().equals(potentialMatchId)){
+            for (User user : allUsersList) {
+                if (user.getUser_id().equals(potentialMatchId)) {
                     potentialMatch = user;
                 }
             }
@@ -719,7 +720,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 HandshakeTimer h = new HandshakeTimer(5000, 1000);
                 h.start();
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             //Toast.makeText(NavMapActivity.this, "Catch", Toast.LENGTH_LONG).show();
 
             Log.d(TAG, "onHandshake: potentialMatch's something is null");
@@ -758,7 +759,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
             for (User u : allUsersList) {
                 Log.d(TAG, "onTick: Handshake user = " + u.getUser_id());
-                if(u.getUser_id().equals(potentialMatchId)) {
+                if (u.getUser_id().equals(potentialMatchId)) {
                     potentialMatch = u;
                     Log.d(TAG, "onTick: Handshake potentialMatch = " + potentialMatch.getUser_id());
                 }
@@ -774,32 +775,11 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 showPopup();
 
                 mUser.incConnectionCounter();
-                //this.onFinish();
-
-
-
-                //back online or nearby users
-              //  Log.d(TAG, "onTick handshake: resetStatus");
-//                resetStatus();
-//                //counter++
-//                mUser.incConnectionCounter();
-//                //resetMatch
-//                resetPotentialMarker();
-//                mUser.setHandshakeDetected(false);
-//                //updateUser
-//                dbHandler.updateUser(mUser);
-//                //Toast.makeText(NavMapActivity.this, "Connecting people!!!!!!!!!", Toast.LENGTH_LONG).show();
-//
-//                //connect, new intent
             }
         }
 
         @Override
         public void onFinish() {
-            //resetMatch
-            //mUser.setHandshakeDetected(false);
-            //resetPotentialMarker();
-            //back online or nearby users
             mUser.setHandshakeDetected(false);
             hasPotentialMatch = false;
             potentialMatchId = empty;
@@ -825,7 +805,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
         @Override
         public void onFinish() {
-            try{
+            try {
                 Log.d(TAG, "Timer:  System update");
 
                 if (mUser != null) {
@@ -872,7 +852,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                     statusAwaitingHandshake();
                 }
                 start();
-            }catch(Exception e){
+            } catch (Exception e) {
                 Log.e("Error", "Error: " + e.toString());
             }
         }
