@@ -103,7 +103,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         UpdateInformationTimer timer = new UpdateInformationTimer(5000, 200);
         timer.start();
 
-        Log.d(TAG, "onCreate: status is set to online");
         statusOnline();
 
         timerCounter = 0;
@@ -163,9 +162,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     //Menyraden
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        //TODO: add Info
-        //TODO: Remove profile
-        //TODO: Remove Settings
         switch (item.getItemId()) {
             case R.id.action_sign_out: {
                 signOut();
@@ -209,7 +205,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        //Toast.makeText(this, "Map is ready", Toast.LENGTH_SHORT).show();
         Log.d(TAG, "onMapReady: map is ready");
         mMap = googleMap;
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
@@ -223,7 +218,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
         if (hasPermissionAndLocation()) {
             Log.d(TAG, "onMapReady: hasPermissionAndLocation = true");
-
             Log.d(TAG, "onMapReady: status is set to online");
             statusOnline();
             setMapSettings();
@@ -417,7 +411,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
     private void updatePotentialMatch(Marker marker) {
         Log.d(TAG, "updatePotentialMatch: entered");
-        // String userId = (String) marker.getTag();
         String markerId = (String) marker.getTag();
 
         Log.d(TAG, "updatePotentialMatch: marker tag = " + markerId);
@@ -440,7 +433,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         } else if (potentialMatchId.equals(markerId)) {
             Log.d(TAG, "updatePotentialMarker: Scenario 2");
             Log.d(TAG, "updatePotentialMatch: potentialMatch is currentMarker");
-            //currentMarker.setIcon(BitmapDescriptorFactory.fromResource(nearbyMarker));
             currentMarker.remove();
             User clickedUser = null;
             for (User user : allUsersList) {
@@ -494,21 +486,15 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             }
             Log.d(TAG, "updatePotentialMarker: End of Scenario 3");
         }
-        Log.d(TAG, "updatePotentialMatch: updating mUser");
         dbHandler.updateUser(mUser);
-
-        Log.d(TAG, "updatePotentialMatch: Clear and reset map");
         resetMap();
-
         markerLock = false;
     }
 
     private void setPotentialMarker(Marker marker) {
         String userId = (String) marker.getTag();
-        Log.d(TAG, "setPotentialMarker: user's id: " + userId);
         setPotentialMatch(userId);
         currentMarker = marker;
-        Log.d(TAG, "setPotentialMarker: marker = " + marker);
         marker.setIcon(BitmapDescriptorFactory.fromResource(outlinedMarker));
         hasPotentialMatch = true;
     }
@@ -516,8 +502,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private void resetPotentialMarker() {
         if (currentMarker != null) {
             String userId = (String) currentMarker.getTag();
-            Log.d(TAG, "resetPotentialMarker: reset --> user's id: " + potentialMatchId);
-            Log.d(TAG, "resetPotentialMarker: reset --> marker's id: " + userId);
             currentMarker.setIcon(BitmapDescriptorFactory.fromResource(nearbyMarker));
             currentMarker = null;
             potentialMatchId = empty;
@@ -528,21 +512,17 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
     public void updateNearbyUsers() {
         if (allUsersList == null || allUsersList.isEmpty()) {
-            Log.d(TAG, "updateNearbyUsers: allUsers i null");
             return;
         }
 
         boolean oldListEmpty;
         if (nearbyUsers == null) {
             oldListEmpty = true;
-            Log.d(TAG, "nearbyUsers is null");
         } else {
             if (nearbyUsers.isEmpty()) {
                 oldListEmpty = true;
-                Log.d(TAG, "Old list is empty");
             } else {
                 oldListEmpty = false;
-                Log.d(TAG, "Old list is not empty");
             }
         }
 
@@ -550,25 +530,15 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         for (User user : allUsersList) {
             LatLng otherLocation = user.getLocation();
             double distance = locationDistance(currentLatLng.latitude, currentLatLng.longitude, otherLocation.latitude, otherLocation.longitude);
-            Log.d(TAG, "Your location is: " + currentLatLng.latitude + " : " + currentLatLng.longitude);
-            Log.d(TAG, user.getUsername() + "'s location is: " + otherLocation.latitude + " : " + user.getLocation().longitude);
-            Log.d(TAG, "The distance to " + user.getUsername() + " is: " + (distance));
 
             if (!user.getUser_id().equals(mUser.getUser_id())) {
-                Log.d(TAG, "updateNearbyUsers: user != current user");
                 if (user.isActive() && distance < RADIUS) {
-                    Log.d(TAG, "updateNearbyUsers: user is active and within distance");
                     if (distance <= maxDistance) {
-                        Log.d(TAG, "updateNearbyUsers: user is nearby! user's id: " + user.getUser_id());
                         if (hasPotentialMatch && user.getUser_id().equals(potentialMatchId)) {
                             nearbyUsers.add(user);
-                            Log.d(TAG, "updateNearbyUsers: potential nearbyUser is added " + user.getUser_id());
-                            Log.d(TAG, "updateNearbyUsers: total nearbyUsers = " + nearbyUsers.size());
                             createPotentialMarker(user);
                         } else {
                             nearbyUsers.add(user);
-                            Log.d(TAG, "updateNearbyUsers: nearbyUser is added " + user.getUser_id());
-                            Log.d(TAG, "updateNearbyUsers: total nearbyUsers = " + nearbyUsers.size());
                             createNearbyMarker(user);
                         }
                     } else {
@@ -628,7 +598,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 .position(new LatLng(user.getLocation().latitude, user.getLocation().longitude));
         Marker marker = mMap.addMarker(opt);
         marker.setTag(user.getUser_id());
-        Log.d(TAG, "createNearbyMarker: tag: " + marker.getTag());
     }
 
     public void createDistantMarker(User user) {
@@ -638,7 +607,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
         Marker marker = mMap.addMarker(opt);
         marker.setTag(user.getUser_id());
-        Log.d(TAG, "createDistantMarker: tag: " + marker.getTag());
     }
 
     public void createPotentialMarker(User user) {
@@ -652,7 +620,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         potentialMatchId = user.getUser_id();
         mUser.setPotentialMatch(potentialMatchId);
         hasPotentialMatch = true;
-        Log.d(TAG, "createPotentialMarker: tag: " + marker.getTag());
     }
 
     private void vibrate(long time) {
@@ -694,29 +661,19 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     }
 
     public void onHandshake() {
-        //Toast.makeText(NavMapActivity.this, "Vad heter melon på engelska?", Toast.LENGTH_LONG).show();
-
         Log.d(TAG, "onHandshake: hasPotentialMatch = " + hasPotentialMatch);
-        //TODO update potenialMatch user object
         if (!hasPotentialMatch || !mUser.isActive()) {
-            //Toast.makeText(NavMapActivity.this, "nopotentialmatch", Toast.LENGTH_LONG).show();
             return;
         }
-        Log.d(TAG, "onHandshake: potentialMatch is not null and current user is active");
-
         try {
-
-            //Toast.makeText(NavMapActivity.this, "try", Toast.LENGTH_LONG).show();
             for (User user : allUsersList) {
                 if (user.getUser_id().equals(potentialMatchId)) {
                     potentialMatch = user;
                 }
             }
             String potentialMeId = potentialMatch.getPotentialMatch();
-            //Toast.makeText(NavMapActivity.this, "Vad heter melon på engelska?" + potentialMatch.getUser_id() , Toast.LENGTH_LONG).show();
 
             if (mUser.getUser_id().equals(potentialMeId)) {
-                //vibrate(50);
                 mUser.setHandshakeDetected(true);
                 mUser.setHandShakeTime(Calendar.getInstance().getTime());
                 dbHandler.updateUser(mUser);
@@ -725,8 +682,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 h.start();
             }
         } catch (Exception e) {
-            //Toast.makeText(NavMapActivity.this, "Catch", Toast.LENGTH_LONG).show();
-
             Log.d(TAG, "onHandshake: potentialMatch's something is null");
             return;
         }
@@ -750,10 +705,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
         @Override
         public void onTick(long millisUntilFinished) {
-            //Toast.makeText(NavMapActivity.this, "Tick", Toast.LENGTH_LONG).show();
-
-            Log.d(TAG, "onTick: Handshake");
-
             if (!hasPotentialMatch) {
                 resetStatus();
                 return;
@@ -762,10 +713,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             dbHandler.getAllUsers();
 
             for (User u : allUsersList) {
-                Log.d(TAG, "onTick: Handshake user = " + u.getUser_id());
                 if (u.getUser_id().equals(potentialMatchId)) {
                     potentialMatch = u;
-                    Log.d(TAG, "onTick: Handshake potentialMatch = " + potentialMatch.getUser_id());
                 }
             }
 
@@ -774,7 +723,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
             //if (mUser.getUser_id().equals(potentialMeId) && potentialMatch.isActive() && potentialMatch.isHandshakeDetected() && handshakeTimeDiff < 10000) {
             if (mUser.getUser_id().equals(potentialMeId) && potentialMatch.isActive() && potentialMatch.isHandshakeDetected()) {
-                //Toast.makeText(NavMapActivity.this, "Connecting people!!!!!!!!!", Toast.LENGTH_LONG).show();
                 vibrate(500);
                 showPopup();
 
@@ -791,8 +739,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             dbHandler.updateUser(mUser);
             resetMap();
             resetStatus();
-
-            Log.d(TAG, "onFinish: reset");
         }
     }
 
@@ -810,11 +756,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         @Override
         public void onFinish() {
             try {
-                Log.d(TAG, "Timer:  System update");
-
                 if (mUser != null) {
                     timerCounter++;
-                    Log.d(TAG, "onFinish timerCounter = " + timerCounter);
                 }
 
                 if (markerLock) {
@@ -823,24 +766,14 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 }
 
                 if (mUser != null && mUser.isActive()) {
-                    Log.d(TAG, "Timer: Clear and reset map");
                     resetMap();
-
-                    Log.d(TAG, "Timer: updating device location");
                     updateDeviceLocation();
-
-                    Log.d(TAG, "Timer: update user");
                     dbHandler.updateUser(mUser);
-
-                    Log.d(TAG, "Timer: update all users");
                     dbHandler.getAllUsers();
                 } else if (mUser != null) {
-                    Log.d(TAG, "Timer: update user");
                     dbHandler.updateUser(mUser);
-                    Log.d(TAG, "Timer: Clear and reset settings");
                     mMap.clear();
                     setMapSettings();
-
                 }
 
                 if (timerCounter == 1) {

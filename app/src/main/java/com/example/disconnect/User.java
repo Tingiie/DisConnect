@@ -2,7 +2,6 @@ package com.example.disconnect;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-
 import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.IgnoreExtraProperties;
@@ -28,8 +27,6 @@ public class User implements Parcelable {
 
     }
 
-    //  private String avatar;
-
     public User(boolean active, int connectionCounter, String email, Date handShakeTime, boolean handshakeDetected, String potentialMatch, String user_id, String username, GeoPoint geo_point, Date timestamp) {
         this.user_id = user_id;
         this.active = active;
@@ -49,7 +46,6 @@ public class User implements Parcelable {
         username = in.readString();
         active = Boolean.parseBoolean(in.readString());
         timestamp = null;
-        // avatar = in.readString();
     }
 
     public static final Creator<User> CREATOR = new Creator<User>() {
@@ -64,14 +60,6 @@ public class User implements Parcelable {
         }
     };
 
-    /*
-        public String getAvatar() {
-            return avatar;
-        }
-        public void setAvatar(String avatar) {
-            this.avatar = avatar;
-        }
-    */
     public static Creator<User> getCREATOR() {
         return CREATOR;
     }
@@ -83,7 +71,6 @@ public class User implements Parcelable {
     public void setEmail(String email) {
         this.email = email;
     }
-
 
     public void setActive(boolean active) {
         this.active = active;
@@ -119,7 +106,6 @@ public class User implements Parcelable {
                 ", geo_point=" + geo_point +
                 ", timestamp=" + timestamp +
                 '}';
-        //", avatar='" + avatar + '\'' +
     }
 
     @Override
@@ -132,7 +118,6 @@ public class User implements Parcelable {
         dest.writeString(email);
         dest.writeString(user_id);
         dest.writeString(username);
-        // dest.writeString(avatar);
     }
 
     public boolean isHandshakeDetected() {

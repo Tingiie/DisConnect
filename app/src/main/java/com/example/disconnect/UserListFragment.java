@@ -10,21 +10,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-
 import java.util.ArrayList;
 
 public class UserListFragment extends Fragment {
 
     private static final String TAG = "UserListFragment";
-
     //widgets
     private RecyclerView mUserListRecyclerView;
-
-
     //vars
     private ArrayList<User> mUserList = new ArrayList<>();
     private UserRecyclerAdapter mUserRecyclerAdapter;
-
 
     public static UserListFragment newInstance(){
         return new UserListFragment();
@@ -48,29 +43,9 @@ public class UserListFragment extends Fragment {
         return view;
     }
 
-
     private void initUserListRecyclerView(){
         mUserRecyclerAdapter = new UserRecyclerAdapter(mUserList);
         mUserListRecyclerView.setAdapter(mUserRecyclerAdapter);
         mUserListRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

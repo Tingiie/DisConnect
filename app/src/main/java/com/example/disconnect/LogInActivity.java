@@ -12,7 +12,6 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-
 import com.example.disconnect.R;
 import com.example.disconnect.UserClient;
 import com.example.disconnect.User;
@@ -39,12 +38,9 @@ import static android.text.TextUtils.isEmpty;
 public class LogInActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String TAG = "LoginActivity";
-
     //Firebase
     private FirebaseAuth.AuthStateListener mAuthListener;
-
     // widgets
-
     EditText mEmail, mPassword;
     ProgressBar mProgressBar;
     FirebaseAuth mAuth;
@@ -53,18 +49,14 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_log_in);
-
         FirebaseApp.initializeApp(this);
         mAuth = FirebaseAuth.getInstance();
-
         mEmail = findViewById(R.id.email);
         mPassword = findViewById(R.id.password);
         mProgressBar = findViewById(R.id.progressBar);
-
         setupFirebaseAuth();
         findViewById(R.id.email_sign_in_button).setOnClickListener(this);
         findViewById(R.id.link_register).setOnClickListener(this);
-
         hideSoftKeyboard();
     }
 
@@ -95,26 +87,20 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
                 if (user != null) {
                     Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
                     Toast.makeText(LogInActivity.this, "Authenticated with: " + user.getEmail(), Toast.LENGTH_SHORT).show();
-
                     FirebaseFirestore db = FirebaseFirestore.getInstance();
                     FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
                             .setTimestampsInSnapshotsEnabled(true)
                             .build();
                     db.setFirestoreSettings(settings);
-
                     DocumentReference userRef = db.collection(getString(R.string.collection_users))
                             .document(user.getUid());
-
                     userRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                         @Override
                         public void onComplete(@NonNull Task<DocumentSnapshot> task) {
                             if (task.isSuccessful()) {
                                 Log.d(TAG, "onComplete: successfully set the user client.");
                                 Boolean active = task.getResult().getBoolean("active");
-                                //Boolean active = true;
-                                //Sätts till 0 pga null i Firebase. Ska senare använda:
                                 int conncount = Math.toIntExact((long) task.getResult().get("connectionCounter"));
-                                // int conncount = 0;
                                 String email = task.getResult().getString("email");
                                 Date handshakeTime = task.getResult().getDate("handShakeTime");
                                 Boolean handshakeDetected = task.getResult().getBoolean("handshakeDetected");
@@ -134,7 +120,6 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
                     startActivity(intent);
                     finish();
                 } else {
-                    // User is signed out
                     Log.d(TAG, "onAuthStateChanged:signed_out");
                 }
             }
@@ -156,21 +141,16 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
     }
 
     private void signIn() {
-        //check if the fields are filled out
         if (!isEmpty(mEmail.getText().toString())
                 && !isEmpty(mPassword.getText().toString())) {
             Log.d(TAG, "onClick: attempting to authenticate.");
-
             showDialog();
-
             FirebaseAuth.getInstance().signInWithEmailAndPassword(mEmail.getText().toString(),
                     mPassword.getText().toString())
                     .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
-
                             hideDialog();
-
                         }
                     }).addOnFailureListener(new OnFailureListener() {
                 @Override
@@ -192,7 +172,6 @@ public class LogInActivity extends AppCompatActivity implements View.OnClickList
                 startActivity(intent);
                 break;
             }
-
             case R.id.email_sign_in_button: {
                 signIn();
                 break;

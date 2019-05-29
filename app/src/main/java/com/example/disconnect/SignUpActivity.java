@@ -30,31 +30,22 @@ import static com.example.disconnect.Check.doStringsMatch;
 public class SignUpActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String TAG = "SignUpActivity";
-
     //widgets
     ProgressBar progressBar;
     EditText editTextEmail, editTextPassword, editConfirmPassword;
     private FirebaseAuth mAuth;
-
     //vars
     private FirebaseFirestore mDb;
-
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_up);
-
         editTextEmail = (EditText) findViewById(R.id.input_email);
-
         editTextPassword = (EditText) findViewById(R.id.input_password);
-
         editConfirmPassword = (EditText) findViewById(R.id.input_confirm_password);
-
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
-
         findViewById(R.id.btn_register).setOnClickListener(this);
-
         FirebaseApp.initializeApp(this);
         mAuth = FirebaseAuth.getInstance();
         mDb = FirebaseFirestore.getInstance();
@@ -63,17 +54,12 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
 
     private void registerUser(final String email, String password) {
         showDialog();
-
         FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
-                        Log.d(TAG, "createUserWithEmail:onComplete:" + task.isSuccessful());
-
                         if (task.isSuccessful()) {
                             Log.d(TAG, "onComplete: AuthState: " + FirebaseAuth.getInstance().getCurrentUser().getUid());
-
-                            //insert some default data
                             User user = new User();
                             user.setActive(true);
                             user.setEmail(email);

@@ -16,7 +16,6 @@ public class HandshakeDetector implements ShakeDetector.ShakeListener {
 
     @Override
     public void onShakeDetected() {
-        //Should probably trigger on onShakeStopped instead, test and reevaluate.
         activity.onHandshake();
     }
 

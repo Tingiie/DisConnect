@@ -1,12 +1,9 @@
 package com.example.disconnect;
 
-
 import android.os.Parcel;
 import android.os.Parcelable;
-
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.ServerTimestamp;
-
 import java.util.Date;
 
 public class UserLocation {
