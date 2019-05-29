@@ -79,6 +79,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private int timerCounter;
     private boolean markerLock = false;
     private Dialog myDialog;
+    private int connectionCounter = 0;
+    private boolean connected;
 
     // User object representing user of current session
     private User mUser;
@@ -254,13 +256,13 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             } else {
                 statusOffline();
                 Log.d(TAG, "updateDeviceLocation: current location is null");
-                Toast.makeText(NavMapActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(NavMapActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
                 return false;
             }
         } catch (SecurityException e) {
             statusOffline();
             Log.d(TAG, "updateDeviceLocation: SecurityException: " + e.getMessage());
-            Toast.makeText(NavMapActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(NavMapActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
             return false;
         }
     }
@@ -723,10 +725,14 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
             //if (mUser.getUser_id().equals(potentialMeId) && potentialMatch.isActive() && potentialMatch.isHandshakeDetected() && handshakeTimeDiff < 10000) {
             if (mUser.getUser_id().equals(potentialMeId) && potentialMatch.isActive() && potentialMatch.isHandshakeDetected()) {
-                vibrate(500);
-                showPopup();
 
                 mUser.incConnectionCounter();
+                connectionCounter++;
+                if (connectionCounter == 1) {
+                    connected = true;
+                    vibrate(500);
+                    showPopup();
+                }
             }
         }
 
@@ -737,10 +743,18 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             potentialMatchId = empty;
             mUser.setPotentialMatch(empty);
             dbHandler.updateUser(mUser);
-            resetMap();
+            mMap.clear();
+            setMapSettings();
+            setCircle();
+            centerMap(currentLatLng);
             resetStatus();
+            if (connected) {
+                connectionCounter = 0;
+            }
         }
     }
+
+    
 
     private class UpdateInformationTimer extends CountDownTimer {
 
