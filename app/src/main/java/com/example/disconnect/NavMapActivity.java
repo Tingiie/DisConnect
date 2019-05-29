@@ -725,7 +725,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
             //if (mUser.getUser_id().equals(potentialMeId) && potentialMatch.isActive() && potentialMatch.isHandshakeDetected() && handshakeTimeDiff < 10000) {
             if (mUser.getUser_id().equals(potentialMeId) && potentialMatch.isActive() && potentialMatch.isHandshakeDetected()) {
-
+                statusConnected();
                 mUser.incConnectionCounter();
                 connectionCounter++;
                 if (connectionCounter == 1) {
@@ -754,7 +754,11 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
     }
 
-    
+    private void statusConnected () {
+        Log.d(TAG, "statusConnected: entered");
+        status = "Connecting";
+        setTitle(status);
+    }
 
     private class UpdateInformationTimer extends CountDownTimer {
 
