@@ -201,6 +201,12 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         finish();
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        signOut();
+    }
+
     private void initMap() {
         Log.d(TAG, "initMap: map is initialized");
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
