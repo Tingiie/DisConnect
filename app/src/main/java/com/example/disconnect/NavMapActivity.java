@@ -40,7 +40,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import android.app.Dialog;
-import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 
 import java.util.ArrayList;
@@ -81,6 +80,9 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
     private Dialog myDialog;
     private int connectionCounter = 0;
     private boolean connected;
+    private boolean connecting;
+    private HandshakeTimer handshakeTimer;
+    private int amountNearbyUsers = 0;
 
     // User object representing user of current session
     private User mUser;
@@ -372,14 +374,14 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
     }
 
-    private void statusNearbyUsers(int count) {
+    private void statusNearbyUsers() {
         Log.d(TAG, "statusNearbyUsers: entered");
         Log.d(TAG, "statusNearbyUsers hasPotentialMatch = " + hasPotentialMatch);
         if (hasPotentialMatch) {
             statusAwaitingHandshake();
             return;
         }
-        status = "Nearby users: " + count;
+        status = "Nearby users: " + amountNearbyUsers;
         setTitle(status);
         if (mUser != null) {
             mUser.setActive(true);
@@ -551,7 +553,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
 
         if (!nearbyUsers.isEmpty()) {
-            statusNearbyUsers(nearbyUsers.size());
+            amountNearbyUsers = nearbyUsers.size();
         }
 
         if (!nearbyUsers.isEmpty()) {
@@ -568,30 +570,6 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         } else {
             hasVibrated = false;
         }
-    }
-
-
-    public void showPopup() {
-        TextView txtclose;
-        Button btn;
-        myDialog.setContentView(R.layout.activity_custom_pop);
-        txtclose = (TextView) myDialog.findViewById(R.id.txtclose);
-        txtclose.setText("X");
-        txtclose.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                myDialog.dismiss();
-                mUser.setHandshakeDetected(false);
-                hasPotentialMatch = false;
-                potentialMatchId = empty;
-                mUser.setPotentialMatch(empty);
-                dbHandler.updateUser(mUser);
-                resetMap();
-                resetStatus();
-            }
-        });
-        myDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        myDialog.show();
     }
 
     public void createNearbyMarker(User user) {
@@ -680,8 +658,8 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 mUser.setHandShakeTime(Calendar.getInstance().getTime());
                 dbHandler.updateUser(mUser);
 
-                HandshakeTimer h = new HandshakeTimer(5000, 1000);
-                h.start();
+                handshakeTimer = new HandshakeTimer(5000, 1000);
+                handshakeTimer.start();
             }
         } catch (Exception e) {
             Log.d(TAG, "onHandshake: potentialMatch's something is null");
@@ -689,14 +667,45 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
         }
     }
 
+    public void showPopup() {
+        TextView txtclose;
+        Button btn;
+        myDialog.setContentView(R.layout.activity_custom_pop);
+        txtclose = (TextView) myDialog.findViewById(R.id.txtclose);
+        txtclose.setText("X");
+        txtclose.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                myDialog.dismiss();
+                mUser.setHandshakeDetected(false);
+                hasPotentialMatch = false;
+                potentialMatchId = empty;
+                mUser.setPotentialMatch(empty);
+                dbHandler.updateUser(mUser);
+                setMapSettings();
+                setCircle();
+                centerMap(currentLatLng);
+                statusConnected();
+                connected = false;
+                connecting = false;
+            }
+        });
+        myDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        myDialog.show();
+    }
+
     private void resetStatus() {
         Log.d(TAG, "resetStatus: entered");
-        if (nearbyUsers.isEmpty()) {
+        if (connected) {
+            statusConnected();
+        } else if (connecting) {
+            statusConnecting();
+        } else if (nearbyUsers.isEmpty()) {
             statusOnline();
         } else if (hasPotentialMatch) {
             statusAwaitingHandshake();
         } else {
-            statusNearbyUsers(nearbyUsers.size());
+            statusNearbyUsers();
         }
     }
 
@@ -725,14 +734,24 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
             //if (mUser.getUser_id().equals(potentialMeId) && potentialMatch.isActive() && potentialMatch.isHandshakeDetected() && handshakeTimeDiff < 10000) {
             if (mUser.getUser_id().equals(potentialMeId) && potentialMatch.isActive() && potentialMatch.isHandshakeDetected()) {
-                statusConnected();
-                mUser.incConnectionCounter();
+                statusConnecting();
+                connecting = true;
                 connectionCounter++;
                 if (connectionCounter == 1) {
                     connected = true;
+                    statusConnected();
+                    mUser.incConnectionCounter();
                     vibrate(500);
                     showPopup();
+                } else {
+                    handshakeTimer.cancel();
+                    try {
+                        handshakeTimer.finalize();
+                    } catch (Throwable throwable) {
+                        throwable.printStackTrace();
+                    }
                 }
+                allUsersList = new ArrayList<>();
             }
         }
 
@@ -747,16 +766,23 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             setMapSettings();
             setCircle();
             centerMap(currentLatLng);
-            resetStatus();
+            //resetStatus();
             if (connected) {
                 connectionCounter = 0;
+                connected = false;
             }
         }
     }
 
-    private void statusConnected () {
-        Log.d(TAG, "statusConnected: entered");
+    private void statusConnecting() {
+        Log.d(TAG, "statusConnecting: entered");
         status = "Connecting";
+        setTitle(status);
+    }
+
+    private void statusConnected() {
+        Log.d(TAG, "statusConnected: entered");
+        status = "Connected";
         setTitle(status);
     }
 
@@ -785,7 +811,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
 
                 if (mUser != null && mUser.isActive()) {
                     resetMap();
-                    updateDeviceLocation();
+                    //updateDeviceLocation();
                     dbHandler.updateUser(mUser);
                     dbHandler.getAllUsers();
                 } else if (mUser != null) {
@@ -808,7 +834,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                 }
                 start();
             } catch (Exception e) {
-                Log.e("Error", "Error: " + e.toString());
+                Log.e(TAG, "UpdateInformationTimer: Error: " + e.toString());
             }
         }
     }
