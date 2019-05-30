@@ -152,7 +152,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
                     }
                 } else {
                     statusOffline();
-                    Toast.makeText(NavMapActivity.this, "Please turn on Location", Toast.LENGTH_LONG).show();
+                    Toast.makeText(NavMapActivity.this, "Please turn on your location", Toast.LENGTH_LONG).show();
                     mMap.clear();
                     enableMapLocation(false);
                 }
@@ -232,6 +232,7 @@ public class NavMapActivity extends AppCompatActivity implements OnMapReadyCallb
             centerMap(currentLatLng);
         } else {
             Log.d(TAG, "onMapReady: hasPermissionAndLocation = false");
+            Toast.makeText(NavMapActivity.this, "Please turn on your location", Toast.LENGTH_LONG).show();
             statusOffline();
         }
     }

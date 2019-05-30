@@ -22,11 +22,10 @@
         <activity android:name=".CustomPopActivity"></activity>
         <activity android:name=".InfoActivity" >
             <intent-filter>
-        <action android:name="android.intent.action.MAIN" />
-
-        <category android:name="android.intent.category.LAUNCHER" />
-    </intent-filter>
-    </activity>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
         <activity android:name=".activity_info1" />
         <activity android:name=".Info3Activity" />
         <activity android:name=".Info2Activity" />
@@ -46,7 +45,8 @@
 
         <activity
             android:name=".NavMapActivity"
-            android:label="DisConnect" />
+            android:label="DisConnect" >
+        </activity>
     </application>
 
 </manifest>
